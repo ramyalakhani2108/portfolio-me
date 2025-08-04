@@ -182,7 +182,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
                 Use the admin credentials to access the dashboard
               </p>
               <p className="text-xs text-white/30 mt-1">
-                Username: Art1204 | Password: Art@1204
+                {/* Username: Art1204 | Password: Art@1204 */}
               </p>
             </div>
           </CardContent>
