@@ -25,31 +25,4 @@ CREATE INDEX IF NOT EXISTS idx_skills_active ON public.skills(is_active);
 CREATE INDEX IF NOT EXISTS idx_experiences_active ON public.experiences(is_active);
 CREATE INDEX IF NOT EXISTS idx_testimonials_active ON public.testimonials(is_active);
 
--- Enable realtime for portfolio tables
-DO $$
-BEGIN
-    BEGIN
-        ALTER PUBLICATION supabase_realtime ADD TABLE public.projects;
-    EXCEPTION WHEN duplicate_object THEN
-        -- Table already in publication, ignore
-    END;
-    
-    BEGIN
-        ALTER PUBLICATION supabase_realtime ADD TABLE public.skills;
-    EXCEPTION WHEN duplicate_object THEN
-        -- Table already in publication, ignore
-    END;
-    
-    BEGIN
-        ALTER PUBLICATION supabase_realtime ADD TABLE public.experiences;
-    EXCEPTION WHEN duplicate_object THEN
-        -- Table already in publication, ignore
-    END;
-    
-    BEGIN
-        ALTER PUBLICATION supabase_realtime ADD TABLE public.testimonials;
-    EXCEPTION WHEN duplicate_object THEN
-        -- Table already in publication, ignore
-    END;
-END
-$$;
+-- Note: Supabase realtime publications removed as we're using PostgreSQL directly

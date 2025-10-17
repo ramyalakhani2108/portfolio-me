@@ -60,9 +60,11 @@ import {
   WifiOff,
   Loader2,
 } from "lucide-react";
+import { db } from "@/lib/db";
 import { supabase } from "../../../supabase/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "../../../supabase/auth";
+import { getSession, signOut as authSignOut } from "@/lib/auth";
 import HireViewEditor from "./HireViewEditor";
 import PortfolioCMS from "./PortfolioCMS";
 import jsPDF from "jspdf";
@@ -77,6 +79,9 @@ interface ContactSubmission {
   user_flow: string;
   status: string;
   created_at: string;
+  // Optional legacy fields
+  priority?: string;
+  tags?: string[];
 }
 
 interface AnalyticsData {
@@ -84,6 +89,13 @@ interface AnalyticsData {
   user_flow: string;
   page_path: string;
   created_at: string;
+  // Optional legacy analytics fields used in UI
+  session_id?: string;
+  ip_address?: string;
+  time_spent?: number;
+  country?: string;
+  device_type?: string;
+  referrer?: string;
 }
 
 interface AdminDashboardProps {

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "../../../supabase/supabase";
+import { signIn as authSignIn, signUp as authSignUp } from "@/lib/auth";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
 
 interface AdminLoginProps {
@@ -33,42 +33,33 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
         // Store admin authentication in localStorage
         localStorage.setItem("adminAuthenticated", "true");
 
-        // Try to authenticate with Supabase as well (optional)
+        // Try to authenticate with our custom auth system
         try {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: ADMIN_EMAIL,
-            password: ADMIN_PASSWORD,
-          });
+          const { data, error } = await authSignIn(ADMIN_EMAIL, ADMIN_PASSWORD);
 
           // If user doesn't exist, try to create it
-          if (error && error.message.includes("Invalid login credentials")) {
-            const { error: signUpError } = await supabase.auth.signUp({
-              email: ADMIN_EMAIL,
-              password: ADMIN_PASSWORD,
-              options: {
-                data: {
-                  full_name: "Admin User",
-                  role: "admin",
-                },
-              },
-            });
+          if (error && error.message.includes("Invalid credentials")) {
+            const { error: signUpError } = await authSignUp(
+              ADMIN_EMAIL,
+              ADMIN_PASSWORD,
+              "Admin User"
+            );
 
-            if (
-              !signUpError ||
-              signUpError.message.includes("already registered")
-            ) {
+            if (!signUpError) {
               // Try to sign in again
-              await supabase.auth.signInWithPassword({
-                email: ADMIN_EMAIL,
-                password: ADMIN_PASSWORD,
-              });
+              const { data: signInData } = await authSignIn(ADMIN_EMAIL, ADMIN_PASSWORD);
+              if (signInData?.session?.access_token) {
+                localStorage.setItem("auth_token", signInData.session.access_token);
+              }
             }
+          } else if (data?.session?.access_token) {
+            localStorage.setItem("auth_token", data.session.access_token);
           }
-        } catch (supabaseError) {
-          // Supabase auth failed, but we'll continue with localStorage auth
+        } catch (authError) {
+          // Auth failed, but we'll continue with localStorage admin auth
           console.warn(
-            "Supabase authentication failed, using local auth:",
-            supabaseError,
+            "Authentication failed, using local auth:",
+            authError,
           );
         }
 
