@@ -108,6 +108,53 @@ app.post('/api/auth/signin', async (req, res) => {
   }
 });
 
+// Admin sign in
+app.post('/api/auth/admin/signin', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const result = await query(
+      'SELECT id, username, password_hash, full_name, email, is_active, created_at FROM admins WHERE username = $1',
+      [username]
+    );
+
+    if (result.data.length === 0) {
+      return res.status(401).json({ error: 'Invalid admin credentials' });
+    }
+
+    const admin = result.data[0];
+
+    if (!admin.is_active) {
+      return res.status(403).json({ error: 'Admin account is disabled' });
+    }
+
+    const isValid = await bcrypt.compare(password, admin.password_hash);
+
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid admin credentials' });
+    }
+
+    // Update last login
+    await query('UPDATE admins SET last_login = NOW() WHERE id = $1', [admin.id]);
+
+    delete admin.password_hash;
+    const token = Buffer.from(`admin:${admin.id}:${Date.now()}`).toString('base64');
+
+    res.json({ 
+      user: {
+        id: admin.id,
+        username: admin.username,
+        email: admin.email,
+        full_name: admin.full_name,
+        role: 'admin'
+      }, 
+      token 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ============= GENERIC DATABASE ROUTES =============
 
 // GET - Select from table

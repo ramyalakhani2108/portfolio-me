@@ -12,7 +12,9 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "migrate": "node migrate.js",
-    "db:create": "createdb -h $VITE_DB_HOST -p $VITE_DB_PORT -U $VITE_DB_USER $VITE_DB_NAME"
+    "db:create": "createdb -h $VITE_DB_HOST -p $VITE_DB_PORT -U $VITE_DB_USER $VITE_DB_NAME",
+    "seed:admin": "node seed-admin.js",
+    "admin:add": "node add-admin.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
