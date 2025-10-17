@@ -3,7 +3,6 @@ import { useAuth } from "../../../supabase/auth";
 import AdminLogin from "../admin/AdminLogin";
 import AdminDashboard from "../admin/AdminDashboard";
 import { LoadingScreen } from "../ui/loading-spinner";
-import ConnectionDebug from "../debug/ConnectionDebug";
 
 export default function AdminPage() {
   const { user, loading, signOut } = useAuth();
@@ -51,7 +50,6 @@ export default function AdminPage() {
   if (!isAuthenticated) {
     return (
       <div className="space-y-6">
-        <ConnectionDebug />
         <AdminLogin onLoginSuccess={handleLoginSuccess} />
       </div>
     );
