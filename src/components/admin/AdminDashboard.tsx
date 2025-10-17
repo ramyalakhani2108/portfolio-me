@@ -462,8 +462,49 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const handleLogout = async () => {
     logOperation("Manual logout initiated");
+    
+    try {
+      // Get admin token if available for logout API call
+      const adminToken = localStorage.getItem("admin_token");
+      const adminUser = JSON.parse(localStorage.getItem("admin_user") || "{}");
+      
+      // Call logout API endpoint
+      if (adminToken) {
+        try {
+          await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/auth/admin/signout`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              token: adminToken,
+              userId: adminUser.id,
+            }),
+          });
+        } catch (error) {
+          console.warn("Error calling logout API:", error);
+          // Continue with logout even if API call fails
+        }
+      }
+    } catch (error) {
+      console.warn("Error preparing logout:", error);
+    }
+    
+    // Clear all admin-specific auth tokens
     localStorage.removeItem("adminAuthenticated");
-    await signOut(); // This will trigger SIGNED_OUT event and call onLogout()
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_user");
+    localStorage.removeItem("auth_token"); // Also clear regular auth token
+    
+    try {
+      await signOut(); // This will trigger SIGNED_OUT event and call onLogout()
+    } catch (error) {
+      console.warn("Error during signOut:", error);
+      // Continue with logout even if signOut fails
+    }
+    
+    // Explicitly call onLogout to ensure redirect happens
+    onLogout();
   };
 
   const fetchResumeData = async () => {

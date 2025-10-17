@@ -155,6 +155,23 @@ app.post('/api/auth/admin/signin', async (req, res) => {
   }
 });
 
+// Admin sign out
+app.post('/api/auth/admin/signout', async (req, res) => {
+  try {
+    const { token, userId } = req.body;
+
+    // Optional: Log the logout in a future admin_logs table
+    if (userId) {
+      // You can add logging here later
+      console.log(`Admin logout: ${userId}`);
+    }
+
+    res.json({ success: true, message: 'Admin signed out successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ============= GENERIC DATABASE ROUTES =============
 
 // GET - Select from table

@@ -28,13 +28,19 @@ export default function AdminPage() {
   };
 
   const handleLogout = async () => {
-    // Clear both Supabase session and local storage
+    // Clear all admin-related session data
     localStorage.removeItem("adminAuthenticated");
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_user");
+    localStorage.removeItem("auth_token");
+    
     try {
       await signOut();
     } catch (error) {
       console.error("Error signing out:", error);
     }
+    
+    // Ensure we're logged out
     setIsAuthenticated(false);
   };
 
