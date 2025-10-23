@@ -37,7 +37,7 @@ import {
   Palette,
   Settings,
 } from "lucide-react";
-import { supabase } from "../../../supabase/supabase";
+import { db } from "@/lib/db";
 import { useToast } from "@/components/ui/use-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
@@ -118,19 +118,19 @@ export default function PortfolioCMS() {
 
       const [projectsRes, skillsRes, experiencesRes, testimonialsRes] =
         await Promise.all([
-          supabase
+          db
             .from("projects")
             .select("*")
             .order("order_index", { ascending: true }),
-          supabase
+          db
             .from("skills")
             .select("*")
             .order("name", { ascending: true }),
-          supabase
+          db
             .from("experiences")
             .select("*")
             .order("order_index", { ascending: true }),
-          supabase
+          db
             .from("testimonials")
             .select("*")
             .order("created_at", { ascending: false }),
@@ -194,13 +194,11 @@ export default function PortfolioCMS() {
   // Add is_active column to tables if it doesn't exist
   const ensureActiveColumn = async (tableName: string) => {
     try {
-      // Try to add the column - this will fail silently if it already exists
-      await supabase.rpc("exec_sql", {
-        sql: `ALTER TABLE ${tableName} ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;`,
-      });
+      // Columns already exist in PostgreSQL tables, no need to add them
+      // This function is kept for legacy compatibility
+      console.log(`Table ${tableName} is ready`);
     } catch (error) {
-      // Column might already exist, which is fine
-      console.log(`Column is_active might already exist in ${tableName}`);
+      console.log(`Error with ${tableName}`);
     }
   };
 
@@ -212,7 +210,7 @@ export default function PortfolioCMS() {
 
   const updateProjectStatus = async (projectId: string, isActive: boolean) => {
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from("projects")
         .update({ is_active: isActive })
         .eq("id", projectId);
@@ -240,7 +238,7 @@ export default function PortfolioCMS() {
 
   const updateSkillStatus = async (skillId: string, isActive: boolean) => {
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from("skills")
         .update({ is_active: isActive })
         .eq("id", skillId);
@@ -248,7 +246,9 @@ export default function PortfolioCMS() {
       if (error) throw error;
 
       setSkills((prev) =>
-        prev.map((s) => (s.id === skillId ? { ...s, is_active: isActive } : s)),
+        prev.map((s) =>
+          s.id === skillId ? { ...s, is_active: isActive } : s,
+        ),
       );
 
       toast({
@@ -262,14 +262,12 @@ export default function PortfolioCMS() {
         variant: "destructive",
       });
     }
-  };
-
-  const updateExperienceStatus = async (
+  };  const updateExperienceStatus = async (
     experienceId: string,
     isActive: boolean,
   ) => {
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from("experiences")
         .update({ is_active: isActive })
         .eq("id", experienceId);
@@ -300,7 +298,7 @@ export default function PortfolioCMS() {
     isActive: boolean,
   ) => {
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from("testimonials")
         .update({ is_active: isActive })
         .eq("id", testimonialId);
@@ -342,7 +340,7 @@ export default function PortfolioCMS() {
         is_active: true,
       };
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("projects")
         .insert([newProject])
         .select()
@@ -369,7 +367,7 @@ export default function PortfolioCMS() {
 
   const deleteProject = async (projectId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from("projects")
         .delete()
         .eq("id", projectId);

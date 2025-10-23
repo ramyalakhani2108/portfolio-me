@@ -127,8 +127,14 @@ export const db = {
       
       // INSERT operation
       insert: (data: any | any[]) => {
+        let returnSingle = false;
+        
         const chainable: any = {
           select: () => chainable,
+          single: () => {
+            returnSingle = true;
+            return chainable;
+          },
           then: async (resolve: any, reject: any) => {
             const records = Array.isArray(data) ? data : [data];
             
@@ -153,10 +159,17 @@ export const db = {
                 results.push(result.data?.[0]);
               }
               
-              resolve({
-                data: Array.isArray(data) ? results : results[0],
-                error: null
-              });
+              if (returnSingle) {
+                resolve({
+                  data: results[0] || null,
+                  error: null
+                });
+              } else {
+                resolve({
+                  data: Array.isArray(data) ? results : results[0],
+                  error: null
+                });
+              }
             } catch (error: any) {
               resolve({
                 data: null,

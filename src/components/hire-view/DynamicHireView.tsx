@@ -692,16 +692,19 @@ export default function DynamicHireView({
           background: `linear-gradient(135deg, ${themeSettings.primaryColor}, ${themeSettings.secondaryColor})`,
         }}
       >
-        <img
-          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80"
-          alt={profile?.full_name || "Profile"}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src =
-              "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face&auto=format&q=80";
-          }}
-        />
+        {section.content?.profile_photo ? (
+          <img
+            src={section.content.profile_photo}
+            alt={profile?.full_name || "Profile"}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = "none";
+            }}
+          />
+        ) : (
+          <span>{section.content?.avatar_text || "RL"}</span>
+        )}
       </div>
       <h1
         className={`text-4xl font-bold ${isDarkMode ? "text-white" : "text-gray-900"}`}
@@ -728,11 +731,11 @@ export default function DynamicHireView({
         {/* Always show contact information for hire view */}
         <div className="flex items-center gap-1">
           <Mail className="w-4 h-4" />
-          <span>{section.content?.email || "lakhani.ramya.u@gmail.co"}</span>
+          <span>{section.content?.email || "contact@example.com"}</span>
         </div>
         <div className="flex items-center gap-1">
           <Phone className="w-4 h-4" />
-          <span>{section.content?.phone || "+91 7202800803"}</span>
+          <span>{section.content?.phone || "+1 (555) 000-0000"}</span>
         </div>
         {section.content?.location && (
           <div className="flex items-center gap-1">

@@ -1862,6 +1862,98 @@ export default function HireViewEditor() {
                           </div>
                         </div>
                         <div className="space-y-2">
+                          <Label>Professional Bio</Label>
+                          <Textarea
+                            value={section.content?.bio || ""}
+                            onChange={(e) =>
+                              handleSectionContentChange(
+                                section.id,
+                                "bio",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="A brief professional bio (2-3 sentences)"
+                            rows={3}
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Profile Photo URL</Label>
+                            <Input
+                              value={section.content?.profile_photo || ""}
+                              onChange={(e) =>
+                                handleSectionContentChange(
+                                  section.id,
+                                  "profile_photo",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="https://example.com/photo.jpg"
+                              type="url"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Avatar Text (Fallback)</Label>
+                            <Input
+                              value={section.content?.avatar_text || ""}
+                              onChange={(e) =>
+                                handleSectionContentChange(
+                                  section.id,
+                                  "avatar_text",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="e.g., RL for Ramya Lakhani"
+                              maxLength={2}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label>Email</Label>
+                            <Input
+                              value={section.content?.email || ""}
+                              onChange={(e) =>
+                                handleSectionContentChange(
+                                  section.id,
+                                  "email",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="contact@example.com"
+                              type="email"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Phone</Label>
+                            <Input
+                              value={section.content?.phone || ""}
+                              onChange={(e) =>
+                                handleSectionContentChange(
+                                  section.id,
+                                  "phone",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="+1 (555) 000-0000"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Location</Label>
+                            <Input
+                              value={section.content?.location || ""}
+                              onChange={(e) =>
+                                handleSectionContentChange(
+                                  section.id,
+                                  "location",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="City, Country"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
                           <Label>CTA Text</Label>
                           <Input
                             value={section.content?.cta_text || ""}
