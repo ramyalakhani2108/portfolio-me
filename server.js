@@ -245,10 +245,18 @@ app.post('/api/auth/admin/signout', async (req, res) => {
 
 // ============= PROFILES MANAGEMENT ROUTES =============
 
-// GET - All profiles
+// GET - All profiles (or active only if activeOnly=true)
 app.get('/api/profiles', async (req, res) => {
   try {
-    const result = await query('SELECT * FROM profiles ORDER BY created_at DESC');
+    const { activeOnly } = req.query;
+    
+    let sql = 'SELECT * FROM profiles';
+    if (activeOnly === 'true') {
+      sql += ' WHERE is_active = true';
+    }
+    sql += ' ORDER BY created_at DESC';
+    
+    const result = await query(sql);
     res.json(result);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -500,6 +508,40 @@ app.get('/api/migrate/fix-profiles-fk', async (req, res) => {
       success: true,
       message: `Foreign key constraints removed (${removedCount} total)`,
       status: 'profiles table is now ready for independent profile records'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Add is_active column to profiles table
+app.get('/api/migrate/add-is-active-profiles', async (req, res) => {
+  try {
+    // Add is_active column if it doesn't exist
+    await pool.query(`
+      ALTER TABLE profiles 
+      ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true
+    `);
+    
+    // Set all existing profiles to active
+    await pool.query(`
+      UPDATE profiles 
+      SET is_active = true 
+      WHERE is_active IS NULL
+    `);
+    
+    // Create index for better query performance
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_profiles_active ON profiles(is_active)
+    `);
+    
+    res.json({
+      success: true,
+      message: 'is_active column added to profiles table',
+      status: 'All profiles set to active by default'
     });
   } catch (error) {
     res.status(500).json({

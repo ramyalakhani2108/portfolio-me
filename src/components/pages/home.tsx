@@ -204,33 +204,34 @@ export default function LandingPage() {
 
   const fetchProfileData = async () => {
     try {
-      // Fetch from PostgreSQL backend API
+      // Fetch only the active profile from PostgreSQL backend API
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${API_URL}/profiles`);
+      const response = await fetch(`${API_URL}/profiles?activeOnly=true`);
       const data = await response.json();
 
       // Check if we have valid data from API
       if (data.success !== false && data.data && Array.isArray(data.data) && data.data.length > 0) {
-        // Map profiles from database
-        const profilesData = data.data.map((p: any) => ({
-          id: p.id,
-          full_name: p.full_name || "Developer",
-          bio: p.bio || "Passionate developer",
-          role: p.role || "Full-Stack Developer",
-          avatar_url: p.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
-          experience: p.experience,
-          status: p.status,
-        }));
+        // Use the first active profile (there should only be one)
+        const profileData = data.data[0];
+        const profile: Profile = {
+          id: profileData.id,
+          full_name: profileData.full_name || "Developer",
+          bio: profileData.bio || "Passionate developer",
+          role: profileData.role || "Full-Stack Developer",
+          avatar_url: profileData.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
+          experience: profileData.experience,
+          status: profileData.status,
+        };
         
-        setAllProfiles(profilesData);
-        setProfile(profilesData[0]);
-        console.log("✅ Profiles loaded from PostgreSQL API");
+        setAllProfiles([profile]);
+        setProfile(profile);
+        console.log("✅ Active profile loaded from PostgreSQL API:", profile);
         return;
       } else {
-        console.log("⚠️ No profiles found in database, using default values");
+        console.log("⚠️ No active profile found in database, using default values");
       }
     } catch (error) {
-      console.error("❌ Error fetching profiles from PostgreSQL API:", error);
+      console.error("❌ Error fetching active profile from PostgreSQL API:", error);
     }
 
     // Fallback to default values if API fails or returns no data
@@ -408,7 +409,7 @@ export default function LandingPage() {
                 >
                   <div className="w-full h-full rounded-full bg-gradient-to-br from-slate-900 to-purple-900 flex items-center justify-center text-white text-4xl lg:text-5xl font-bold overflow-hidden">
                     <img
-                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80"
+                      src={profile?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80"}
                       alt={profile?.full_name || "Profile Avatar"}
                       className="w-full h-full object-cover rounded-full"
                       onError={(e) => {
