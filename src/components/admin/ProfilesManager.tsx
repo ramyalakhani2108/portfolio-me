@@ -26,6 +26,7 @@ interface Profile {
   role: string;
   bio: string;
   avatar_url: string;
+  image_data?: string; // Base64 image data
   experience?: string;
   status?: string;
   is_active?: boolean;
@@ -38,6 +39,7 @@ interface ProfileFormData {
   experience: string;
   status: string;
   avatar_url: string;
+  image_data?: string; // Base64 image data
 }
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
@@ -217,8 +219,10 @@ export default function ProfilesManager() {
       experience: profile.experience || "",
       status: profile.status || "",
       avatar_url: profile.avatar_url || "",
+      image_data: profile.image_data || "",
     });
-    setPreviewImage(profile.avatar_url);
+    // Show preview from image_data (base64) or fall back to avatar_url
+    setPreviewImage(profile.image_data || profile.avatar_url);
     setEditingId(profile.id);
     setShowForm(true);
   };
@@ -283,38 +287,29 @@ export default function ProfilesManager() {
     setIsUploadingImage(true);
 
     try {
-      // Show preview first
+      // Convert file to base64
       const reader = new FileReader();
       reader.onload = (e) => {
-        setPreviewImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+        const base64Data = e.target?.result as string;
+        
+        // Show preview immediately
+        setPreviewImage(base64Data);
 
-      // Upload file to server
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch(`${API_URL}/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.url) {
-        // Save URL to form data
+        // Store base64 directly in image_data (NOT as file path)
         setFormData((prev) => ({
           ...prev,
-          avatar_url: data.url,
+          image_data: base64Data, // ← Store base64 directly, not file path
         }));
 
         toast({
           title: "Success",
           description: "Image uploaded successfully. Click Save Profile to confirm.",
         });
-      } else {
-        throw new Error(data.error || "Upload failed");
-      }
+        
+        setIsUploadingImage(false);
+      };
+      
+      reader.readAsDataURL(file);
     } catch (error) {
       console.error("Error uploading image:", error);
       toast({
@@ -323,7 +318,6 @@ export default function ProfilesManager() {
         variant: "destructive",
       });
       setPreviewImage(null);
-    } finally {
       setIsUploadingImage(false);
     }
   };
