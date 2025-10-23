@@ -50,10 +50,13 @@ interface ChatMessage {
 }
 
 interface Profile {
+  id?: string;
   full_name: string;
   bio: string;
   role: string;
-  avatar_url: string;
+  avatar_url?: string;
+  experience?: string;
+  status?: string;
 }
 
 export default function LandingPage() {
@@ -62,6 +65,7 @@ export default function LandingPage() {
   const [sessionId] = useState(() => Math.random().toString(36).substring(7));
   const [viewMode, setViewMode] = useState<ViewMode>("landing");
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
   const [lastDataRefresh, setLastDataRefresh] = useState(Date.now());
 
   const { toast } = useToast();
@@ -200,35 +204,44 @@ export default function LandingPage() {
 
   const fetchProfileData = async () => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", "main")
-        .single();
+      // Fetch from PostgreSQL backend API
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${API_URL}/profiles`);
+      const data = await response.json();
 
-      if (data && !error) {
-        setProfile(data);
+      // Check if we have valid data from API
+      if (data.success !== false && data.data && Array.isArray(data.data) && data.data.length > 0) {
+        // Map profiles from database
+        const profilesData = data.data.map((p: any) => ({
+          id: p.id,
+          full_name: p.full_name || "Developer",
+          bio: p.bio || "Passionate developer",
+          role: p.role || "Full-Stack Developer",
+          avatar_url: p.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
+          experience: p.experience,
+          status: p.status,
+        }));
+        
+        setAllProfiles(profilesData);
+        setProfile(profilesData[0]);
+        console.log("✅ Profiles loaded from PostgreSQL API");
+        return;
       } else {
-        // Fallback data for offline development
-        setProfile({
-          full_name: "Ramya Lakhani",
-          bio: "Full-stack developer passionate about creating amazing digital experiences",
-          role: "Full-Stack Developer",
-          avatar_url:
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
-        });
+        console.log("⚠️ No profiles found in database, using default values");
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
-      // Use fallback data
-      setProfile({
-        full_name: "Ramya Lakhani",
-        bio: "Full-stack developer passionate about creating amazing digital experiences",
-        role: "Full-Stack Developer",
-        avatar_url:
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
-      });
+      console.error("❌ Error fetching profiles from PostgreSQL API:", error);
     }
+
+    // Fallback to default values if API fails or returns no data
+    const defaultProfile: Profile = {
+      full_name: "Ramya Lakhani",
+      bio: "Full-stack developer passionate about creating amazing digital experiences",
+      role: "Full-Stack Developer",
+      avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
+    };
+    setProfile(defaultProfile);
+    setAllProfiles([defaultProfile]);
   };
 
   const trackAnalytics = async (data: AnalyticsData) => {
@@ -435,6 +448,24 @@ export default function LandingPage() {
                 {profile?.bio ||
                   "Passionate developer creating amazing digital experiences with modern technologies."}
               </p>
+              
+              {/* Additional Profile Details */}
+              <div className="flex flex-wrap gap-3 mt-6 justify-center lg:justify-start">
+                {profile?.experience && (
+                  <div className="px-4 py-2 bg-cyan-500/20 backdrop-blur-sm rounded-full border border-cyan-400/40">
+                    <p className="text-sm text-cyan-300">
+                      📅 {profile.experience}
+                    </p>
+                  </div>
+                )}
+                {profile?.status && (
+                  <div className="px-4 py-2 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-400/40">
+                    <p className="text-sm text-purple-300">
+                      ✨ {profile.status}
+                    </p>
+                  </div>
+                )}
+              </div>
             </motion.div>
           </motion.div>
 
@@ -642,7 +673,7 @@ export default function LandingPage() {
       </main>
 
       {/* Enhanced Gemini AI Chatbot - Available on Landing Page */}
-      {profile && <ChatWidget profile={profile} />}
+      {profile && <ChatWidget profile={profile as any} />}
 
       {/* Floating elements for extra visual appeal */}
       <div className="absolute top-20 left-10 w-2 h-2 bg-cyan-400 rounded-full animate-pulse opacity-40"></div>
