@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { User } from "@supabase/supabase-js";
-import { supabase } from "./supabase";
+import { User, signIn as authSignIn, signUp as authSignUp, signOut as authSignOut, getSession } from "../src/lib/auth";
+import { db, storage } from "../src/lib/db";
 
 type AuthContextType = {
   user: User | null;
@@ -22,26 +22,28 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Store token in localStorage
+const TOKEN_KEY = 'auth_token';
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    // Check active sessions
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      getSession(token).then(({ data, error }) => {
+        if (data?.session?.user) {
+          setUser(data.session.user);
+        } else {
+          localStorage.removeItem(TOKEN_KEY);
+        }
+        setLoading(false);
+      });
+    } else {
       setLoading(false);
-    });
-
-    // Listen for changes on auth state (signed in, signed out, etc.)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
   const signUp = async (
@@ -50,24 +52,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fullName: string,
     profileImageFile?: File,
   ) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
-    });
+    const { data, error } = await authSignUp(email, password, fullName);
     if (error) throw error;
 
-    // If profile image is provided, upload it
-    if (profileImageFile && data.user) {
-      try {
-        await uploadProfileImage(data.user.id, profileImageFile, fullName);
-      } catch (uploadError) {
-        console.error("Profile image upload failed:", uploadError);
-        // Don't throw error, account creation should still succeed
+    if (data?.user) {
+      setUser(data.user);
+      if (data.session?.access_token) {
+        localStorage.setItem(TOKEN_KEY, data.session.access_token);
+      }
+
+      // If profile image is provided, upload it
+      if (profileImageFile) {
+        try {
+          await uploadProfileImage(data.user.id, profileImageFile, fullName);
+        } catch (uploadError) {
+          console.error("Profile image upload failed:", uploadError);
+          // Don't throw error, account creation should still succeed
+        }
       }
     }
   };
@@ -113,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const fileName = `${userId}/avatar.webp`;
 
     // Upload to storage
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await storage
       .from("public-profile-images")
       .upload(fileName, webpBlob, {
         cacheControl: "3600",
@@ -124,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (uploadError) throw uploadError;
 
     // Update profile in database
-    const { error: profileError } = await supabase.from("profiles").upsert({
+    const { error: profileError } = await db.from("profiles").upsert({
       id: userId,
       full_name: fullName,
       avatar_url: fileName,
@@ -137,16 +138,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data, error } = await authSignIn(email, password);
     if (error) throw error;
+    
+    if (data?.user) {
+      setUser(data.user);
+      if (data.session?.access_token) {
+        localStorage.setItem(TOKEN_KEY, data.session.access_token);
+      }
+    }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      await authSignOut(token);
+      localStorage.removeItem(TOKEN_KEY);
+    }
+    setUser(null);
   };
 
   return (

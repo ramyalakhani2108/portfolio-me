@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID REFERENCES auth.users ON DELETE CASCADE,
+  id UUID REFERENCES auth_users ON DELETE CASCADE,
   full_name TEXT,
   role TEXT DEFAULT 'Full-Stack Developer',
   experience TEXT DEFAULT '1 year professional',
@@ -204,7 +204,7 @@ CREATE INDEX IF NOT EXISTS idx_contact_submissions_flow ON public.contact_submis
 CREATE INDEX IF NOT EXISTS idx_visitor_analytics_flow ON public.visitor_analytics(user_flow);
 
 -- Add foreign key constraints
-ALTER TABLE public.profiles ADD CONSTRAINT fk_profiles_user_id FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.profiles ADD CONSTRAINT fk_profiles_user_id FOREIGN KEY (id) REFERENCES auth_users(id) ON DELETE CASCADE;
 
 -- Disable Row Level Security for hire view tables to allow full access
 -- This ensures admin operations work without authentication issues
@@ -216,12 +216,12 @@ ALTER TABLE public.hire_contact_fields DISABLE ROW LEVEL SECURITY;
 
 -- Add triggers for updated_at timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $
+RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
     RETURN NEW;
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_hire_view_settings_updated_at BEFORE UPDATE ON public.hire_view_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_hire_sections_updated_at BEFORE UPDATE ON public.hire_sections FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

@@ -179,31 +179,4 @@ SELECT * FROM (VALUES
 ) AS v(field_type, label, placeholder, is_required, order_index, is_active)
 WHERE NOT EXISTS (SELECT 1 FROM public.hire_contact_fields LIMIT 1);
 
--- Try to add tables to realtime publication (ignore errors if already added)
-DO $$
-BEGIN
-    BEGIN
-        ALTER PUBLICATION supabase_realtime ADD TABLE public.hire_sections;
-    EXCEPTION WHEN duplicate_object THEN
-        -- Table already in publication, ignore
-    END;
-    
-    BEGIN
-        ALTER PUBLICATION supabase_realtime ADD TABLE public.hire_skills;
-    EXCEPTION WHEN duplicate_object THEN
-        -- Table already in publication, ignore
-    END;
-    
-    BEGIN
-        ALTER PUBLICATION supabase_realtime ADD TABLE public.hire_experience;
-    EXCEPTION WHEN duplicate_object THEN
-        -- Table already in publication, ignore
-    END;
-    
-    BEGIN
-        ALTER PUBLICATION supabase_realtime ADD TABLE public.hire_contact_fields;
-    EXCEPTION WHEN duplicate_object THEN
-        -- Table already in publication, ignore
-    END;
-END
-$$;
+-- Note: Supabase realtime publications removed as we're using PostgreSQL directly

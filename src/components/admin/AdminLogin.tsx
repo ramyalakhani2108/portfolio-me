@@ -5,19 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "../../../supabase/supabase";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
 
 interface AdminLoginProps {
   onLoginSuccess: () => void;
 }
 
-// Static admin credentials
-const ADMIN_EMAIL = "Art1204";
-const ADMIN_PASSWORD = "Art@1204";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,64 +25,36 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
     setIsLoading(true);
 
     try {
-      // Check static credentials first
-      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        // Store admin authentication in localStorage
-        localStorage.setItem("adminAuthenticated", "true");
+      // Authenticate with admin API endpoint
+      const response = await fetch(`${API_URL}/auth/admin/signin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
 
-        // Try to authenticate with Supabase as well (optional)
-        try {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: ADMIN_EMAIL,
-            password: ADMIN_PASSWORD,
-          });
+      const data = await response.json();
 
-          // If user doesn't exist, try to create it
-          if (error && error.message.includes("Invalid login credentials")) {
-            const { error: signUpError } = await supabase.auth.signUp({
-              email: ADMIN_EMAIL,
-              password: ADMIN_PASSWORD,
-              options: {
-                data: {
-                  full_name: "Admin User",
-                  role: "admin",
-                },
-              },
-            });
-
-            if (
-              !signUpError ||
-              signUpError.message.includes("already registered")
-            ) {
-              // Try to sign in again
-              await supabase.auth.signInWithPassword({
-                email: ADMIN_EMAIL,
-                password: ADMIN_PASSWORD,
-              });
-            }
-          }
-        } catch (supabaseError) {
-          // Supabase auth failed, but we'll continue with localStorage auth
-          console.warn(
-            "Supabase authentication failed, using local auth:",
-            supabaseError,
-          );
-        }
-
-        toast({
-          title: "Login successful!",
-          description: "Welcome to the admin dashboard.",
-        });
-        onLoginSuccess();
-      } else {
-        throw new Error(
-          "Invalid admin credentials. Please use the correct email and password.",
-        );
+      if (!response.ok) {
+        throw new Error(data.error || 'Authentication failed');
       }
+
+      // Store admin authentication
+      localStorage.setItem("adminAuthenticated", "true");
+      localStorage.setItem("admin_token", data.token);
+      localStorage.setItem("admin_user", JSON.stringify(data.user));
+
+      toast({
+        title: "Login successful!",
+        description: `Welcome back, ${data.user.full_name || data.user.username}!`,
+      });
+      
+      onLoginSuccess();
     } catch (error: any) {
       toast({
         title: "Login failed",
-        description: error.message || "Invalid credentials",
+        description: error.message || "Invalid admin credentials",
         variant: "destructive",
       });
     } finally {
@@ -121,18 +90,18 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-white/80">
+                <Label htmlFor="username" className="text-white/80">
                   Username
                 </Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
                   <Input
-                    id="email"
+                    id="username"
                     type="text"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-purple-400"
-                    placeholder="Art1204"
+                    placeholder="Enter username"
                     required
                   />
                 </div>

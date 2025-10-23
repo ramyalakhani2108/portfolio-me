@@ -1,29 +1,32 @@
-import { supabase } from "../../supabase/supabase";
+import { db } from "./db";
 
-export async function testSupabaseConnection() {
+export async function testDatabaseConnection() {
   try {
-    console.log("Testing Supabase connection...");
-    // Since we're using hardcoded values, we can't check env vars
-    console.log("Using hardcoded Supabase credentials");
+    console.log("Testing PostgreSQL connection...");
+    console.log(`Host: ${process.env.VITE_DB_HOST || 'localhost'}`);
+    console.log(`Database: ${process.env.VITE_DB_NAME || 'portfolio_db'}`);
 
     // Test basic connection
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("hire_sections")
       .select("id")
       .limit(1);
 
     if (error) {
-      console.error("Supabase connection error:", error);
+      console.error("PostgreSQL connection error:", error);
       return { success: false, error: error.message };
     }
 
-    console.log("Supabase connection successful!");
+    console.log("PostgreSQL connection successful!");
     return { success: true, data };
   } catch (error: any) {
     console.error("Connection test failed:", error);
     return { success: false, error: error.message };
   }
 }
+
+// Legacy alias for backward compatibility
+export const testSupabaseConnection = testDatabaseConnection;
 
 // Test all required tables
 export async function testAllTables() {
@@ -40,13 +43,13 @@ export async function testAllTables() {
 
   for (const table of tables) {
     try {
-      const { data, error } = await supabase.from(table).select("*").limit(1);
+      const { data, error } = await db.from(table).select("*").limit(1);
 
       results.push({
         table,
         success: !error,
         error: error?.message,
-        hasData: data && data.length > 0,
+        hasData: data && Array.isArray(data) && data.length > 0,
       });
     } catch (error: any) {
       results.push({

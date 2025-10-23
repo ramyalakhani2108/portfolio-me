@@ -29,7 +29,7 @@ import {
   Target,
   CheckCircle,
 } from "lucide-react";
-import { supabase } from "../../../supabase/supabase";
+import { db } from "@/lib/db";
 import { useToast } from "@/components/ui/use-toast";
 import ChatWidget from "@/components/ui/chat-widget";
 
@@ -138,7 +138,7 @@ export default function PortfolioExperience({
 
   const fetchProfileData = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("profiles")
         .select("*")
         .single();
@@ -200,11 +200,11 @@ export default function PortfolioExperience({
   const fetchData = async () => {
     try {
       const [skillsRes, projectsRes] = await Promise.all([
-        supabase
+        db
           .from("skills")
           .select("*")
           .order("proficiency", { ascending: false }),
-        supabase
+        db
           .from("projects")
           .select("*")
           .order("order_index", { ascending: true }),
@@ -222,7 +222,7 @@ export default function PortfolioExperience({
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("contact_submissions").insert({
+      const { error } = await db.from("contact_submissions").insert({
         name: contactForm.name,
         email: contactForm.email,
         subject: contactForm.subject,
@@ -396,11 +396,10 @@ export default function PortfolioExperience({
                     if (profile.avatar_url.startsWith("http")) {
                       return profile.avatar_url;
                     } else {
-                      // Generate public URL from storage path
-                      const { data } = supabase.storage
-                        .from("public-profile-images")
-                        .getPublicUrl(profile.avatar_url);
-                      return `${data.publicUrl}?v=${Date.now()}`;
+                      // For local storage paths, use a fallback URL
+                      return profile.avatar_url.startsWith('/') 
+                        ? profile.avatar_url 
+                        : `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.full_name}`;
                     }
                   })()}
                   alt={profile?.full_name || "Profile"}

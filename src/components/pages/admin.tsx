@@ -3,7 +3,6 @@ import { useAuth } from "../../../supabase/auth";
 import AdminLogin from "../admin/AdminLogin";
 import AdminDashboard from "../admin/AdminDashboard";
 import { LoadingScreen } from "../ui/loading-spinner";
-import ConnectionDebug from "../debug/ConnectionDebug";
 
 export default function AdminPage() {
   const { user, loading, signOut } = useAuth();
@@ -28,13 +27,19 @@ export default function AdminPage() {
   };
 
   const handleLogout = async () => {
-    // Clear both Supabase session and local storage
+    // Clear all admin-related session data
     localStorage.removeItem("adminAuthenticated");
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_user");
+    localStorage.removeItem("auth_token");
+    
     try {
       await signOut();
     } catch (error) {
       console.error("Error signing out:", error);
     }
+    
+    // Ensure we're logged out
     setIsAuthenticated(false);
   };
 
@@ -45,7 +50,6 @@ export default function AdminPage() {
   if (!isAuthenticated) {
     return (
       <div className="space-y-6">
-        <ConnectionDebug />
         <AdminLogin onLoginSuccess={handleLoginSuccess} />
       </div>
     );
