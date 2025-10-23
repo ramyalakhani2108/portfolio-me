@@ -37,12 +37,20 @@ function fromWrapper(table: string) {
     // Terminal execution method used by await
     async execute() {
       // Use db.from to fetch data (server-side handles paging). We'll apply filters client-side.
-      const options: any = {};
-      if (state.singleFlag) options.single = true;
-      if (state.limit) options.limit = state.limit;
-      if (state.order) options.order = { column: state.order.column, ascending: state.order.ascending };
+      // Build the query chain
+      let query = db.from(table).select(state.columns);
+      
+      if (state.order) {
+        query = query.order(state.order.column, { ascending: state.order.ascending });
+      }
+      if (state.limit) {
+        query = query.limit(state.limit);
+      }
+      if (state.singleFlag) {
+        query = query.single();
+      }
 
-      const res = await db.from(table).select(state.columns, options);
+      const res = await query;
       if (res.error) return { data: null, error: res.error };
 
       let rows = Array.isArray(res.data) ? res.data : res.data ? [res.data] : [];

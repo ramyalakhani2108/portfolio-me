@@ -31,20 +31,40 @@ export const query = async (text: string, params?: any[]): Promise<any> => {
   return { rows: [], rowCount: 0 };
 };
 
-// Database helper functions to mimic Supabase API
+// Database helper functions to mimic Supabase API with chainable methods
 export const db = {
-  // SELECT operations
-  from: (table: string) => ({
-    select: async (columns: string = '*', options?: { single?: boolean; limit?: number; order?: { column: string; ascending?: boolean } }) => {
+  from: (table: string) => {
+    // Query state
+    let queryParams: Record<string, any> = {};
+    
+    const buildQueryString = () => {
+      const params = new URLSearchParams();
+      
+      if (queryParams.limit) {
+        params.append('limit', queryParams.limit.toString());
+      }
+      
+      if (queryParams.order_column) {
+        params.append('order_by', queryParams.order_column);
+        params.append('order_dir', queryParams.order_ascending ? 'ASC' : 'DESC');
+      }
+      
+      if (queryParams.single) {
+        params.append('limit', '1');
+      }
+      
+      const queryString = params.toString();
+      return queryString ? `?${queryString}` : '';
+    };
+    
+    const executeQuery = async () => {
       try {
-        let endpoint = `/db/${table}?`;
+        let endpoint = `/db/${table}${buildQueryString()}`;
         
-        if (options?.limit) {
-          endpoint += `limit=${options.limit}&`;
-        }
-        
-        if (options?.order) {
-          endpoint += `order_by=${options.order.column}&order_dir=${options.order.ascending ? 'ASC' : 'DESC'}`;
+        // Add filter if present
+        if (queryParams.filter_column) {
+          const separator = endpoint.includes('?') ? '&' : '?';
+          endpoint += `${separator}${queryParams.filter_column}=${encodeURIComponent(queryParams.filter_value)}`;
         }
 
         const result = await apiFetch(endpoint);
@@ -53,7 +73,7 @@ export const db = {
           return { data: null, error: result.error };
         }
         
-        if (options?.single) {
+        if (queryParams.single) {
           return {
             data: result.data?.[0] || null,
             error: null
@@ -62,7 +82,8 @@ export const db = {
         
         return {
           data: result.data || [],
-          error: null
+          error: null,
+          count: result.data?.length || 0
         };
       } catch (error: any) {
         return {
@@ -70,188 +91,243 @@ export const db = {
           error: { message: error.message }
         };
       }
-    },
+    };
     
-    // INSERT operations
-    insert: async (data: any | any[]) => {
-      const records = Array.isArray(data) ? data : [data];
-      
-      if (records.length === 0) {
-        return { data: null, error: { message: 'No data to insert' } };
-      }
-      
-      try {
-        // Insert each record individually
-        const results = [];
-        for (const record of records) {
-          const result = await apiFetch(`/db/${table}`, {
-            method: 'POST',
-            body: JSON.stringify(record),
-          });
-          
-          if (result.error) {
-            return { data: null, error: result.error };
-          }
-          
-          results.push(result.data?.[0]);
-        }
-        
-        return {
-          data: Array.isArray(data) ? results : results[0],
-          error: null
+    return {
+            // SELECT operation
+      select: (columns: string = '*') => {
+        const promise = Promise.resolve().then(() => executeQuery());
+        const chainable: any = {
+          order: (column: string, options?: { ascending?: boolean; }) => {
+            queryParams.order_column = column;
+            queryParams.order_ascending = options?.ascending !== false;
+            return chainable;
+          },
+          limit: (count: number) => {
+            queryParams.limit = count;
+            return chainable;
+          },
+          single: () => {
+            queryParams.single = true;
+            return chainable;
+          },
+          eq: (column: string, value: any) => {
+            queryParams.filter_column = column;
+            queryParams.filter_value = value;
+            return chainable;
+          },
+          // Make it a full Promise-like
+          then: (resolve: any, reject: any) => promise.then(resolve, reject),
+          catch: (reject: any) => promise.catch(reject),
+          finally: (onFinally: any) => promise.finally(onFinally),
+          [Symbol.toStringTag]: 'Promise',
         };
-      } catch (error: any) {
-        return {
-          data: null,
-          error: { message: error.message }
-        };
-      }
-    },
-    
-    // UPDATE operations
-    update: (data: any) => ({
-      eq: async (column: string, value: any) => {
-        try {
-          const result = await apiFetch(`/db/${table}/${value}`, {
-            method: 'PUT',
-            body: JSON.stringify(data),
-          });
-          
-          return {
-            data: result.data || [],
-            error: result.error
-          };
-        } catch (error: any) {
-          return {
-            data: null,
-            error: { message: error.message }
-          };
-        }
+        return chainable;
       },
-      match: async (conditions: Record<string, any>) => {
-        // For match, we use the id from conditions if available
-        const id = conditions.id;
-        if (!id) {
-          return {
-            data: null,
-            error: { message: 'ID required for update' }
-          };
-        }
-        
-        try {
-          const result = await apiFetch(`/db/${table}/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(data),
-          });
-          
-          return {
-            data: result.data || [],
-            error: result.error
-          };
-        } catch (error: any) {
-          return {
-            data: null,
-            error: { message: error.message }
-          };
-        }
-      }
-    }),
-    
-    // UPSERT operations  
-    upsert: async (data: any | any[], options?: { onConflict?: string }) => {
-      const records = Array.isArray(data) ? data : [data];
       
-      if (records.length === 0) {
-        return { data: null, error: { message: 'No data to upsert' } };
-      }
-      
-      try {
-        const results = [];
-        for (const record of records) {
-          // Try to update first, if it fails, insert
-          if (record.id) {
-            const updateResult = await apiFetch(`/db/${table}/${record.id}`, {
-              method: 'PUT',
-              body: JSON.stringify(record),
-            });
+      // INSERT operation
+      insert: (data: any | any[]) => {
+        const chainable: any = {
+          select: () => chainable,
+          then: async (resolve: any, reject: any) => {
+            const records = Array.isArray(data) ? data : [data];
             
-            if (updateResult.data) {
-              results.push(updateResult.data[0]);
-              continue;
+            if (records.length === 0) {
+              resolve({ data: null, error: { message: 'No data to insert' } });
+              return;
             }
-          }
-          
-          // If update failed or no id, insert
-          const insertResult = await apiFetch(`/db/${table}`, {
-            method: 'POST',
-            body: JSON.stringify(record),
-          });
-          
-          if (insertResult.error) {
-            return { data: null, error: insertResult.error };
-          }
-          
-          results.push(insertResult.data?.[0]);
-        }
-        
-        return {
-          data: Array.isArray(data) ? results : results[0],
-          error: null
+            
+            try {
+              const results = [];
+              for (const record of records) {
+                const result = await apiFetch(`/db/${table}`, {
+                  method: 'POST',
+                  body: JSON.stringify(record),
+                });
+                
+                if (result.error) {
+                  resolve({ data: null, error: result.error });
+                  return;
+                }
+                
+                results.push(result.data?.[0]);
+              }
+              
+              resolve({
+                data: Array.isArray(data) ? results : results[0],
+                error: null
+              });
+            } catch (error: any) {
+              resolve({
+                data: null,
+                error: { message: error.message }
+              });
+            }
+          },
+          catch: (reject: any) => Promise.resolve().then(() => chainable.then(()=>{})).catch(reject),
+          finally: (onFinally: any) => Promise.resolve().then(() => chainable.then(()=>{})).finally(onFinally),
+          [Symbol.toStringTag]: 'Promise',
         };
-      } catch (error: any) {
-        return {
-          data: null,
-          error: { message: error.message }
-        };
-      }
-    },
-    
-    // DELETE operations
-    delete: () => ({
-      eq: async (column: string, value: any) => {
-        try {
-          const result = await apiFetch(`/db/${table}/${value}`, {
-            method: 'DELETE',
-          });
-          
-          return {
-            data: result.data || [],
-            error: result.error
-          };
-        } catch (error: any) {
-          return {
-            data: null,
-            error: { message: error.message }
-          };
-        }
+        return chainable;
       },
-      match: async (conditions: Record<string, any>) => {
-        const id = conditions.id;
-        if (!id) {
-          return {
-            data: null,
-            error: { message: 'ID required for delete' }
-          };
-        }
+      
+      // UPDATE operation
+      update: (data: any) => {
+        let updateColumn: string;
+        let updateValue: any;
         
-        try {
-          const result = await apiFetch(`/db/${table}/${id}`, {
-            method: 'DELETE',
-          });
-          
-          return {
-            data: result.data || [],
-            error: result.error
-          };
-        } catch (error: any) {
-          return {
-            data: null,
-            error: { message: error.message }
-          };
-        }
+        const chainable: any = {
+          eq: (column: string, value: any) => {
+            updateColumn = column;
+            updateValue = value;
+            return chainable;
+          },
+          match: (conditions: Record<string, any>) => {
+            updateColumn = 'id';
+            updateValue = conditions.id;
+            return chainable;
+          },
+          select: () => chainable,
+          then: async (resolve: any, reject: any) => {
+            if (!updateColumn) {
+              resolve({
+                data: null,
+                error: { message: 'Column filter required for update (use .eq() or .match())' }
+              });
+              return;
+            }
+            
+            try {
+              const result = await apiFetch(`/db/${table}/${updateValue}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+              });
+              
+              resolve({
+                data: result.data || [],
+                error: result.error
+              });
+            } catch (error: any) {
+              resolve({
+                data: null,
+                error: { message: error.message }
+              });
+            }
+          },
+          catch: (reject: any) => Promise.resolve().then(() => chainable.then(()=>{})).catch(reject),
+          finally: (onFinally: any) => Promise.resolve().then(() => chainable.then(()=>{})).finally(onFinally),
+          [Symbol.toStringTag]: 'Promise',
+        };
+        return chainable;
+      },
+      
+      // UPSERT operation
+      upsert: (data: any | any[], options?: { onConflict?: string }) => {
+        const chainable: any = {
+          select: () => chainable,
+          then: async (resolve: any, reject: any) => {
+            const records = Array.isArray(data) ? data : [data];
+            
+            if (records.length === 0) {
+              resolve({ data: null, error: { message: 'No data to upsert' } });
+              return;
+            }
+            
+            try {
+              const results = [];
+              for (const record of records) {
+                if (record.id) {
+                  const updateResult = await apiFetch(`/db/${table}/${record.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(record),
+                  });
+                  
+                  if (updateResult.data) {
+                    results.push(updateResult.data[0]);
+                    continue;
+                  }
+                }
+                
+                const insertResult = await apiFetch(`/db/${table}`, {
+                  method: 'POST',
+                  body: JSON.stringify(record),
+                });
+                
+                if (insertResult.error) {
+                  resolve({ data: null, error: insertResult.error });
+                  return;
+                }
+                
+                results.push(insertResult.data?.[0]);
+              }
+              
+              resolve({
+                data: Array.isArray(data) ? results : results[0],
+                error: null
+              });
+            } catch (error: any) {
+              resolve({
+                data: null,
+                error: { message: error.message }
+              });
+            }
+          },
+          catch: (reject: any) => Promise.resolve().then(() => chainable.then(()=>{})).catch(reject),
+          finally: (onFinally: any) => Promise.resolve().then(() => chainable.then(()=>{})).finally(onFinally),
+          [Symbol.toStringTag]: 'Promise',
+        };
+        return chainable;
+      },
+      
+      // DELETE operation
+      delete: () => {
+        let deleteColumn: string;
+        let deleteValue: any;
+        
+        const chainable: any = {
+          eq: (column: string, value: any) => {
+            deleteColumn = column;
+            deleteValue = value;
+            return chainable;
+          },
+          match: (conditions: Record<string, any>) => {
+            deleteColumn = 'id';
+            deleteValue = conditions.id;
+            return chainable;
+          },
+          then: async (resolve: any, reject: any) => {
+            if (!deleteColumn) {
+              resolve({
+                data: null,
+                error: { message: 'Column filter required for delete (use .eq() or .match())' }
+              });
+              return;
+            }
+            
+            try {
+              const result = await apiFetch(`/db/${table}/${deleteValue}`, {
+                method: 'DELETE',
+              });
+              
+              resolve({
+                data: result.data || [],
+                error: result.error
+              });
+            } catch (error: any) {
+              resolve({
+                data: null,
+                error: { message: error.message }
+              });
+            }
+          },
+          catch: (reject: any) => Promise.resolve().then(() => chainable.then(()=>{})).catch(reject),
+          finally: (onFinally: any) => Promise.resolve().then(() => chainable.then(()=>{})).finally(onFinally),
+          [Symbol.toStringTag]: 'Promise',
+        };
+        return chainable;
       }
-    })
-  })
+    };
+  }
 };
 
 // Storage mock (you'll need to implement file storage separately)

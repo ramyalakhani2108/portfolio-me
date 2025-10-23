@@ -43,7 +43,7 @@ import {
   Database,
   Zap,
 } from "lucide-react";
-import { supabase } from "../../../supabase/supabase";
+import { db } from "@/lib/db";
 import { debounce } from "lodash";
 import { useToast } from "@/components/ui/use-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -114,7 +114,7 @@ function ConnectionStatus() {
 
     const testConnection = async () => {
       try {
-        const { error } = await supabase
+        const { error } = await db
           .from("hire_sections")
           .select("id")
           .limit(1);
@@ -181,11 +181,8 @@ export default function HireViewEditor() {
   const [optimisticUpdates, setOptimisticUpdates] = useState<Set<string>>(
     new Set(),
   );
-  const [realtimeActive, setRealtimeActive] = useState(false);
-  const channelsRef = useRef<any[]>([]);
   const { toast } = useToast();
 
-  // Enhanced database connection test
   const testDatabaseConnection = async () => {
     try {
       console.log("Testing database connection...");
@@ -199,7 +196,7 @@ export default function HireViewEditor() {
       ];
 
       for (const table of tables) {
-        const { data, error } = await supabase
+        const { data, error } = await db
           .from(table)
           .select("id")
           .limit(1);
@@ -237,22 +234,22 @@ export default function HireViewEditor() {
 
         const [sectionsRes, skillsRes, experiencesRes, contactFieldsRes] =
           await Promise.all([
-            supabase
+            db
               .from("hire_sections")
               .select("*")
-              .order("order_index", { ascending: true }),
-            supabase
+              .order("order_index", { ascending: true }) as Promise<{data: any[], error: any}>,
+            db
               .from("hire_skills")
               .select("*")
-              .order("order_index", { ascending: true }),
-            supabase
+              .order("order_index", { ascending: true }) as Promise<{data: any[], error: any}>,
+            db
               .from("hire_experience")
               .select("*")
-              .order("order_index", { ascending: true }),
-            supabase
+              .order("order_index", { ascending: true }) as Promise<{data: any[], error: any}>,
+            db
               .from("hire_contact_fields")
               .select("*")
-              .order("order_index", { ascending: true }),
+              .order("order_index", { ascending: true }) as Promise<{data: any[], error: any}>,
           ]);
 
         // Check for errors
@@ -307,75 +304,9 @@ export default function HireViewEditor() {
     [toast],
   );
 
-  // Setup real-time subscriptions with unique channel names and better error handling
-  const setupRealtimeSubscriptions = useCallback(() => {
-    // Clean up existing channels
-    channelsRef.current.forEach((channel) => {
-      supabase.removeChannel(channel);
-    });
-    channelsRef.current = [];
-
-    const tables = [
-      "hire_sections",
-      "hire_skills",
-      "hire_experience",
-      "hire_contact_fields",
-    ];
-
-    let subscribedCount = 0;
-    const sessionId = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    tables.forEach((table) => {
-      const channel = supabase
-        .channel(`${sessionId}_${table}`)
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table },
-          (payload) => {
-            console.log(`Admin: ${table} updated:`, payload);
-            // Refresh data after external changes (with small delay to avoid conflicts)
-            setTimeout(() => {
-              fetchHireViewData(false);
-            }, 200);
-          },
-        )
-        .subscribe((status) => {
-          console.log(`Admin subscription status for ${table}:`, status);
-          if (status === "SUBSCRIBED") {
-            subscribedCount++;
-            if (subscribedCount === tables.length) {
-              setRealtimeActive(true);
-              console.log("All admin real-time subscriptions active");
-            }
-          } else if (status === "CHANNEL_ERROR") {
-            setRealtimeActive(false);
-            console.error(`Admin real-time subscription error for ${table}`);
-            toast({
-              title: "Real-time sync error",
-              description: `Failed to subscribe to ${table} changes`,
-              variant: "destructive",
-            });
-          }
-        });
-
-      channelsRef.current.push(channel);
-    });
-
-    return () => {
-      channelsRef.current.forEach((channel) => {
-        supabase.removeChannel(channel);
-      });
-      channelsRef.current = [];
-      setRealtimeActive(false);
-    };
-  }, [fetchHireViewData, toast]);
-
   useEffect(() => {
     fetchHireViewData();
-    const cleanup = setupRealtimeSubscriptions();
-
-    return cleanup;
-  }, [fetchHireViewData, setupRealtimeSubscriptions]);
+  }, [fetchHireViewData]);
 
   // Optimistic update helper
   const withOptimisticUpdate = async <T,>(
@@ -467,7 +398,7 @@ export default function HireViewEditor() {
       );
 
       // Database update with proper error handling
-      const { data, error, count } = await supabase
+      const { data, error, count } = await db
         .from("hire_sections")
         .update(updateData)
         .eq("id", sectionId)
@@ -494,7 +425,7 @@ export default function HireViewEditor() {
         console.error("No rows updated - section may not exist");
 
         // Check if section exists
-        const { data: existingSection, error: checkError } = await supabase
+        const { data: existingSection, error: checkError } = await db
           .from("hire_sections")
           .select("id")
           .eq("id", sectionId)
@@ -530,7 +461,7 @@ export default function HireViewEditor() {
         // If we get here, the section exists but wasn't updated
         // Try a direct update with all fields
         console.log("Retrying section update with full data...");
-        const { data: retryData, error: retryError } = await supabase
+        const { data: retryData, error: retryError } = await db
           .from("hire_sections")
           .update({
             section_type: updatedSection.section_type,
@@ -741,7 +672,7 @@ export default function HireViewEditor() {
         description: "Please wait...",
       });
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("hire_skills")
         .insert([newSkillData])
         .select();
@@ -851,7 +782,7 @@ export default function HireViewEditor() {
       console.log(`Sending skill update to database for ${skillId}:`, updates);
 
       // Database update with proper error handling
-      const { data, error, count } = await supabase
+      const { data, error, count } = await db
         .from("hire_skills")
         .update(updates)
         .eq("id", skillId)
@@ -873,7 +804,7 @@ export default function HireViewEditor() {
         console.error("No rows updated - skill may not exist");
 
         // Check if skill exists in database
-        const { data: existingSkill, error: checkError } = await supabase
+        const { data: existingSkill, error: checkError } = await db
           .from("hire_skills")
           .select("id")
           .eq("id", skillId)
@@ -900,7 +831,7 @@ export default function HireViewEditor() {
 
         // Try a direct update with all fields
         console.log("Retrying skill update with full data...");
-        const { data: retryData, error: retryError } = await supabase
+        const { data: retryData, error: retryError } = await db
           .from("hire_skills")
           .update({
             name: updatedSkill.name,
@@ -995,7 +926,7 @@ export default function HireViewEditor() {
       // Immediate optimistic update
       setSkills((prev) => prev.filter((skill) => skill.id !== skillId));
 
-      const { error } = await supabase
+      const { error } = await db
         .from("hire_skills")
         .delete()
         .eq("id", skillId);
@@ -1053,7 +984,7 @@ export default function HireViewEditor() {
         description: "Please wait...",
       });
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("hire_experience")
         .insert([newExperience])
         .select();
@@ -1159,7 +1090,7 @@ export default function HireViewEditor() {
         prev.map((exp) => (exp.id === expId ? updatedExp : exp)),
       );
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("hire_experience")
         .update(updates)
         .eq("id", expId)
@@ -1179,7 +1110,7 @@ export default function HireViewEditor() {
         console.error("No rows updated - experience may not exist");
 
         // Check if experience exists
-        const { data: existingExp, error: checkError } = await supabase
+        const { data: existingExp, error: checkError } = await db
           .from("hire_experience")
           .select("id")
           .eq("id", expId)
@@ -1211,7 +1142,7 @@ export default function HireViewEditor() {
 
         // If we get here, the experience exists but wasn't updated (unlikely)
         // Try again with a different approach - full update
-        const { data: retryData, error: retryError } = await supabase
+        const { data: retryData, error: retryError } = await db
           .from("hire_experience")
           .update(updatedExp)
           .eq("id", expId)
@@ -1297,7 +1228,7 @@ export default function HireViewEditor() {
       // Immediate optimistic update
       setExperiences((prev) => prev.filter((exp) => exp.id !== expId));
 
-      const { error } = await supabase
+      const { error } = await db
         .from("hire_experience")
         .delete()
         .eq("id", expId);
@@ -1349,7 +1280,7 @@ export default function HireViewEditor() {
         description: "Please wait...",
       });
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("hire_contact_fields")
         .insert([newField])
         .select();
@@ -1465,7 +1396,7 @@ export default function HireViewEditor() {
         prev.map((field) => (field.id === fieldId ? updatedField : field)),
       );
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("hire_contact_fields")
         .update(updates)
         .eq("id", fieldId)
@@ -1485,7 +1416,7 @@ export default function HireViewEditor() {
         console.error("No rows updated - contact field may not exist");
 
         // Check if contact field exists
-        const { data: existingField, error: checkError } = await supabase
+        const { data: existingField, error: checkError } = await db
           .from("hire_contact_fields")
           .select("id")
           .eq("id", fieldId)
@@ -1524,7 +1455,7 @@ export default function HireViewEditor() {
 
         // If we get here, the field exists but wasn't updated (unlikely)
         // Try again with a different approach - full update
-        const { data: retryData, error: retryError } = await supabase
+        const { data: retryData, error: retryError } = await db
           .from("hire_contact_fields")
           .update(updatedField)
           .eq("id", fieldId)
@@ -1615,7 +1546,7 @@ export default function HireViewEditor() {
       // Immediate optimistic update
       setContactFields((prev) => prev.filter((field) => field.id !== fieldId));
 
-      const { error } = await supabase
+      const { error } = await db
         .from("hire_contact_fields")
         .delete()
         .eq("id", fieldId);
@@ -1699,7 +1630,6 @@ export default function HireViewEditor() {
             </div>
             <div className="flex items-center gap-3">
               <ConnectionStatus />
-              <SyncIndicator isActive={realtimeActive} />
               <div className="flex gap-2">
                 <Button
                   onClick={() => fetchHireViewData(true)}

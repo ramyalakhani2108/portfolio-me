@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // Initialize Gemini AI
 // You need to replace this with your actual Gemini API key
 // Get it from Google AI Studio
-const genAI = new GoogleGenerativeAI("YOUR_ACTUAL_GEMINI_API_KEY_HERE");
+const genAI = new GoogleGenerativeAI("AIzaSyDwjDIYVeBqtMun4PG76Jmcwg6kVw26iKc");
 
 interface PortfolioData {
   full_name: string;
