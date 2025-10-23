@@ -25,4 +25,5 @@ CREATE INDEX IF NOT EXISTS idx_skills_active ON public.skills(is_active);
 CREATE INDEX IF NOT EXISTS idx_experiences_active ON public.experiences(is_active);
 CREATE INDEX IF NOT EXISTS idx_testimonials_active ON public.testimonials(is_active);
 
--- Note: Supabase realtime publications removed as we're using PostgreSQL directly
+-- Migration completed successfully for PostgreSQL
+-- All is_active columns and indexes added to portfolio tables

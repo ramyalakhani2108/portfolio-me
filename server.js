@@ -5,15 +5,57 @@ import pkg from 'pg';
 const { Pool } = pkg;
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+// Static file serving for uploaded images
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
+// Create uploads directory if it doesn't exist
+const uploadDir = path.join(__dirname, 'public/profile-images');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
+    cb(null, uniqueName);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type'));
+    }
+  },
+});
 
 // PostgreSQL connection pool
 const pool = new Pool({
@@ -24,7 +66,8 @@ const pool = new Pool({
   password: process.env.VITE_DB_PASSWORD || '',
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000,
+  ssl: process.env.VITE_DB_HOST && process.env.VITE_DB_HOST.includes('neon') ? { rejectUnauthorized: false } : false,
 });
 
 // Test database connection
@@ -155,6 +198,34 @@ app.post('/api/auth/admin/signin', async (req, res) => {
   }
 });
 
+// ============= FILE UPLOAD ROUTE =============
+
+// Upload profile image
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    // Generate URL for the uploaded file
+    const fileUrl = `/public/profile-images/${req.file.filename}`;
+    
+    res.json({
+      success: true,
+      url: fileUrl,
+      filename: req.file.filename,
+      size: req.file.size,
+      message: 'File uploaded successfully'
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to upload file' 
+    });
+  }
+});
+
 // Admin sign out
 app.post('/api/auth/admin/signout', async (req, res) => {
   try {
@@ -169,6 +240,153 @@ app.post('/api/auth/admin/signout', async (req, res) => {
     res.json({ success: true, message: 'Admin signed out successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ============= PROFILES MANAGEMENT ROUTES =============
+
+// GET - All profiles (or active only if activeOnly=true)
+app.get('/api/profiles', async (req, res) => {
+  try {
+    const { activeOnly } = req.query;
+    
+    let sql = 'SELECT * FROM profiles';
+    if (activeOnly === 'true') {
+      sql += ' WHERE is_active = true';
+    }
+    sql += ' ORDER BY created_at DESC';
+    
+    const result = await query(sql);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET - Single profile by ID
+app.get('/api/profiles/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await query('SELECT * FROM profiles WHERE id = $1', [id]);
+    
+    if (!result.success || result.data.length === 0) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+    
+    res.json({ success: true, data: [result.data[0]] });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST - Create new profile
+app.post('/api/profiles', async (req, res) => {
+  try {
+    const { full_name, role, bio, experience, status, avatar_url } = req.body;
+
+    if (!full_name || !role || !bio) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: full_name, role, bio' 
+      });
+    }
+
+    // Use uuid v4 for proper UUID generation
+    const id = uuidv4();
+    console.log("id", id);
+    const result = await query(
+      `INSERT INTO profiles (id, full_name, role, bio, experience, status, avatar_url, created_at, updated_at) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) RETURNING *`,
+      [id, full_name, role, bio, experience || null, status || null, avatar_url || null]
+    );
+
+    if (result.success && result.data) {
+      res.status(201).json({ success: true, data: result.data });
+    } else {
+      throw new Error('Failed to create profile');
+    }
+  } catch (error) {
+    console.error('Error creating profile:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// PUT - Update profile
+app.put('/api/profiles/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { full_name, role, bio, experience, status, avatar_url } = req.body;
+
+    // Check if profile exists
+    const checkResult = await query('SELECT id FROM profiles WHERE id = $1', [id]);
+    if (!checkResult.success || checkResult.data.length === 0) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    const updateFields = [];
+    const updateValues = [];
+    let paramCount = 1;
+
+    if (full_name !== undefined) {
+      updateFields.push(`full_name = $${paramCount++}`);
+      updateValues.push(full_name);
+    }
+    if (role !== undefined) {
+      updateFields.push(`role = $${paramCount++}`);
+      updateValues.push(role);
+    }
+    if (bio !== undefined) {
+      updateFields.push(`bio = $${paramCount++}`);
+      updateValues.push(bio);
+    }
+    if (experience !== undefined) {
+      updateFields.push(`experience = $${paramCount++}`);
+      updateValues.push(experience);
+    }
+    if (status !== undefined) {
+      updateFields.push(`status = $${paramCount++}`);
+      updateValues.push(status);
+    }
+    if (avatar_url !== undefined) {
+      updateFields.push(`avatar_url = $${paramCount++}`);
+      updateValues.push(avatar_url);
+    }
+
+    updateFields.push(`updated_at = NOW()`);
+    updateValues.push(id);
+
+    const sql = `UPDATE profiles SET ${updateFields.join(', ')} WHERE id = $${paramCount} RETURNING *`;
+    const result = await query(sql, updateValues);
+
+    if (result.success && result.data) {
+      res.json({ success: true, data: result.data });
+    } else {
+      throw new Error('Failed to update profile');
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// DELETE - Delete profile
+app.delete('/api/profiles/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if profile exists
+    const checkResult = await query('SELECT id FROM profiles WHERE id = $1', [id]);
+    if (!checkResult.success || checkResult.data.length === 0) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    const result = await query('DELETE FROM profiles WHERE id = $1 RETURNING *', [id]);
+
+    if (result.success) {
+      res.json({ success: true, data: result.data });
+    } else {
+      throw new Error('Failed to delete profile');
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -262,6 +480,74 @@ app.get('/api/profiles', async (req, res) => {
     res.json(result);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Fix foreign key constraint (migration endpoint)
+app.get('/api/migrate/fix-profiles-fk', async (req, res) => {
+  try {
+    // Drop ALL foreign key constraints on profiles table
+    const constraints = [
+      'profiles_id_fkey',
+      'fk_profiles_user_id',
+      'fk_profiles_auth_users',
+      'profiles_fk_user_id'
+    ];
+    
+    let removedCount = 0;
+    for (const constraint of constraints) {
+      try {
+        await pool.query(`ALTER TABLE profiles DROP CONSTRAINT IF EXISTS ${constraint}`);
+        removedCount++;
+      } catch (e) {
+        // constraint doesn't exist, continue
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: `Foreign key constraints removed (${removedCount} total)`,
+      status: 'profiles table is now ready for independent profile records'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Add is_active column to profiles table
+app.get('/api/migrate/add-is-active-profiles', async (req, res) => {
+  try {
+    // Add is_active column if it doesn't exist
+    await pool.query(`
+      ALTER TABLE profiles 
+      ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true
+    `);
+    
+    // Set all existing profiles to active
+    await pool.query(`
+      UPDATE profiles 
+      SET is_active = true 
+      WHERE is_active IS NULL
+    `);
+    
+    // Create index for better query performance
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_profiles_active ON profiles(is_active)
+    `);
+    
+    res.json({
+      success: true,
+      message: 'is_active column added to profiles table',
+      status: 'All profiles set to active by default'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 

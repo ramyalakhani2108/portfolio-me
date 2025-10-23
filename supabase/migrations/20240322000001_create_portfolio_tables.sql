@@ -1,5 +1,8 @@
+-- This migration extends the portfolio tables with additional data
+-- Note: auth_users table should already exist from initial setup
+
 CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID REFERENCES auth_users ON DELETE CASCADE,
+  id UUID REFERENCES public.auth_users(id) ON DELETE CASCADE,
   full_name TEXT,
   role TEXT DEFAULT 'Full-Stack Developer',
   experience TEXT DEFAULT '1 year professional',
@@ -7,8 +10,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   bio TEXT,
   avatar_url TEXT,
   is_employer_view BOOLEAN DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -18,7 +21,8 @@ CREATE TABLE IF NOT EXISTS public.skills (
   category TEXT NOT NULL,
   proficiency INTEGER CHECK (proficiency >= 1 AND proficiency <= 100),
   icon_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.projects (
@@ -33,8 +37,9 @@ CREATE TABLE IF NOT EXISTS public.projects (
   video_url TEXT,
   featured BOOLEAN DEFAULT false,
   order_index INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.experiences (
@@ -48,7 +53,8 @@ CREATE TABLE IF NOT EXISTS public.experiences (
   location TEXT,
   company_logo TEXT,
   order_index INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.testimonials (
@@ -60,7 +66,8 @@ CREATE TABLE IF NOT EXISTS public.testimonials (
   avatar_url TEXT,
   rating INTEGER CHECK (rating >= 1 AND rating <= 5),
   featured BOOLEAN DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.visitor_analytics (
@@ -72,7 +79,7 @@ CREATE TABLE IF NOT EXISTS public.visitor_analytics (
   ip_address INET,
   referrer TEXT,
   time_spent INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.contact_submissions (
@@ -83,7 +90,7 @@ CREATE TABLE IF NOT EXISTS public.contact_submissions (
   message TEXT NOT NULL,
   user_flow TEXT CHECK (user_flow IN ('employer', 'viewer')),
   status TEXT DEFAULT 'unread' CHECK (status IN ('unread', 'read', 'replied')),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.theme_settings (
@@ -94,7 +101,7 @@ CREATE TABLE IF NOT EXISTS public.theme_settings (
   accent_color TEXT,
   background_gradient TEXT,
   is_active BOOLEAN DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 INSERT INTO public.skills (name, category, proficiency, icon_url) VALUES
@@ -132,8 +139,8 @@ CREATE TABLE IF NOT EXISTS public.hire_view_settings (
   theme TEXT DEFAULT 'professional',
   layout TEXT DEFAULT 'standard',
   is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.hire_sections (
@@ -143,8 +150,8 @@ CREATE TABLE IF NOT EXISTS public.hire_sections (
   content JSONB NOT NULL DEFAULT '{}',
   order_index INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.hire_skills (
@@ -156,7 +163,8 @@ CREATE TABLE IF NOT EXISTS public.hire_skills (
   color TEXT DEFAULT '#8b5cf6',
   order_index INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.hire_experience (
@@ -172,7 +180,8 @@ CREATE TABLE IF NOT EXISTS public.hire_experience (
   achievements TEXT[],
   order_index INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.hire_contact_fields (
@@ -184,7 +193,8 @@ CREATE TABLE IF NOT EXISTS public.hire_contact_fields (
   options JSONB DEFAULT '[]',
   order_index INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 -- Insert default hire view settings
@@ -203,16 +213,15 @@ CREATE INDEX IF NOT EXISTS idx_contact_submissions_status ON public.contact_subm
 CREATE INDEX IF NOT EXISTS idx_contact_submissions_flow ON public.contact_submissions(user_flow);
 CREATE INDEX IF NOT EXISTS idx_visitor_analytics_flow ON public.visitor_analytics(user_flow);
 
--- Add foreign key constraints
-ALTER TABLE public.profiles ADD CONSTRAINT fk_profiles_user_id FOREIGN KEY (id) REFERENCES auth_users(id) ON DELETE CASCADE;
-
--- Disable Row Level Security for hire view tables to allow full access
--- This ensures admin operations work without authentication issues
-ALTER TABLE public.hire_view_settings DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.hire_sections DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.hire_skills DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.hire_experience DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.hire_contact_fields DISABLE ROW LEVEL SECURITY;
+-- Add foreign key constraints (if profiles table doesn't already exist)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints 
+                   WHERE constraint_name = 'fk_profiles_user_id') THEN
+        ALTER TABLE public.profiles ADD CONSTRAINT fk_profiles_user_id 
+        FOREIGN KEY (id) REFERENCES public.auth_users(id) ON DELETE CASCADE;
+    END IF;
+END $$;
 
 -- Add triggers for updated_at timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -223,9 +232,41 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_hire_view_settings_updated_at BEFORE UPDATE ON public.hire_view_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_hire_sections_updated_at BEFORE UPDATE ON public.hire_sections FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_hire_experience_updated_at BEFORE UPDATE ON public.hire_experience FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Create triggers only if they don't exist
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
+CREATE TRIGGER update_profiles_updated_at 
+    BEFORE UPDATE ON public.profiles 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_projects_updated_at ON public.projects;
+CREATE TRIGGER update_projects_updated_at 
+    BEFORE UPDATE ON public.projects 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_hire_view_settings_updated_at ON public.hire_view_settings;
+CREATE TRIGGER update_hire_view_settings_updated_at 
+    BEFORE UPDATE ON public.hire_view_settings 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_hire_sections_updated_at ON public.hire_sections;
+CREATE TRIGGER update_hire_sections_updated_at 
+    BEFORE UPDATE ON public.hire_sections 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_hire_skills_updated_at ON public.hire_skills;
+CREATE TRIGGER update_hire_skills_updated_at 
+    BEFORE UPDATE ON public.hire_skills 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_hire_experience_updated_at ON public.hire_experience;
+CREATE TRIGGER update_hire_experience_updated_at 
+    BEFORE UPDATE ON public.hire_experience 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_hire_contact_fields_updated_at ON public.hire_contact_fields;
+CREATE TRIGGER update_hire_contact_fields_updated_at 
+    BEFORE UPDATE ON public.hire_contact_fields 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Enhanced indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_hire_sections_updated_at ON public.hire_sections(updated_at DESC);
@@ -297,9 +338,5 @@ INSERT INTO public.hire_contact_fields (field_type, label, placeholder, is_requi
 ('text', 'Subject', 'Brief subject line', true, 4),
 ('textarea', 'Message', 'Tell me about your project or opportunity...', true, 5);
 
--- Enable realtime for hire view tables only (other tables already added)
-ALTER PUBLICATION supabase_realtime ADD TABLE public.hire_view_settings;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.hire_sections;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.hire_skills;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.hire_experience;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.hire_contact_fields;
+-- Migration completed successfully for PostgreSQL
+-- All tables, triggers, and indexes created

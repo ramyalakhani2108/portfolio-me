@@ -67,6 +67,7 @@ import { useAuth } from "../../../supabase/auth";
 import { getSession, signOut as authSignOut } from "@/lib/auth";
 import HireViewEditor from "./HireViewEditor";
 import PortfolioCMS from "./PortfolioCMS";
+import ProfilesManager from "./ProfilesManager";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -2859,106 +2860,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
             {/* Profile Management */}
             <TabsContent value="profile" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Profile Image Management
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex flex-col items-center space-y-4">
-                    {/* Current Profile Image */}
-                    <div className="relative">
-                      <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center">
-                        {profileImage ? (
-                          <img
-                            src={profileImage}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                            key={
-                              profileImage
-                            } /* Add key to force re-render when image changes */
-                          />
-                        ) : (
-                          <img
-                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=developer&accessories=sunglasses&accessoriesChance=100&clothingGraphic=skull&top=shortHair&topChance=100&facialHair=goatee&facialHairChance=100"
-                            alt="Developer Avatar"
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                      </div>
-                      {isUploadingImage && (
-                        <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-                          <Loader2 className="w-8 h-8 text-white animate-spin" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Upload Button */}
-                    <div className="text-center">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                        id="profile-image-upload"
-                        disabled={isUploadingImage}
-                      />
-                      <label
-                        htmlFor="profile-image-upload"
-                        className={`inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white rounded-lg cursor-pointer transition-all duration-200 ${isUploadingImage ? "opacity-50 cursor-not-allowed" : ""}`}
-                      >
-                        {isUploadingImage ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Upload className="w-4 h-4" />
-                        )}
-                        {isUploadingImage ? "Uploading..." : "Upload New Image"}
-                      </label>
-                      <p className="text-sm text-gray-500 mt-2">
-                        Supported formats: JPG, PNG, GIF, WebP (Max 10MB) •
-                        Auto-compressed to WebP • No authentication required
-                      </p>
-                    </div>
-
-                    {/* Usage Information */}
-                    <div className="bg-blue-50 p-4 rounded-lg w-full">
-                      <h4 className="font-medium text-blue-900 mb-2">
-                        Where this image appears:
-                      </h4>
-                      <ul className="text-sm text-blue-700 space-y-1">
-                        <li>• Landing page profile section</li>
-                        <li>• Hire view hero section</li>
-                        <li>• Portfolio experience page</li>
-                        <li>• Chat widget avatar</li>
-                        <li>• Generated PDF resume</li>
-                        <li>
-                          • Stored in: Supabase Storage (public-profile-images
-                          bucket)
-                        </li>
-                      </ul>
-                      <div className="mt-3 p-2 bg-green-50 rounded border border-green-200">
-                        <p className="text-xs text-green-700">
-                          ✅ Public folder storage: Images are compressed to
-                          WebP, stored in public Supabase Storage (max 10MB),
-                          and instantly accessible across all portfolio sections
-                          with cache busting. No authentication required -
-                          defaults to admin user.
-                        </p>
-                      </div>
-                      <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
-                        <p className="text-xs text-yellow-700">
-                          📁 Storage Details: Files are stored in
-                          public-profile-images bucket with 10MB limit.
-                          Supported formats: JPEG, PNG, GIF, WebP. URL is saved
-                          in database and used throughout the project.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <ProfilesManager />
             </TabsContent>
           </Tabs>
         </motion.div>
