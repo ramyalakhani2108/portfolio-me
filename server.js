@@ -551,6 +551,43 @@ app.get('/api/migrate/add-is-active-profiles', async (req, res) => {
   }
 });
 
+// Fix admin password hash
+app.get('/api/migrate/fix-admin-password', async (req, res) => {
+  try {
+    // The correct bcrypt hash for password: Art@1204
+    const correctHash = '$2b$10$6L.WAn8rlI1j0imPjP5SwOo0f/Of6CMX3L/hgd7p1qdVhTt577PPS';
+    
+    // Update the admin password
+    const result = await pool.query(
+      'UPDATE admins SET password_hash = $1 WHERE username = $2 RETURNING id, username, email, full_name',
+      [correctHash, 'Art1204']
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Admin user not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Admin password hash updated successfully',
+      admin: result.rows[0],
+      credentials: {
+        username: 'Art1204',
+        password: 'Art@1204'
+      },
+      status: 'You can now login with the credentials above'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Health check
 app.get('/api/health', async (req, res) => {
   try {
