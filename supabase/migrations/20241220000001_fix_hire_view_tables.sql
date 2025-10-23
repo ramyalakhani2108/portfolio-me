@@ -1,7 +1,8 @@
 -- Comprehensive database verification and setup for hire view tables
--- This migration ensures all tables exist with proper structure and data
+-- This migration ensures all hire view tables exist with proper structure and data
+-- Compatible with PostgreSQL production environment
 
--- First, let's verify and create the hire view tables if they don't exist
+-- Create hire view tables if they don't exist
 CREATE TABLE IF NOT EXISTS public.hire_sections (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   section_type TEXT NOT NULL CHECK (section_type IN ('hero', 'skills', 'experience', 'contact', 'resume')),
@@ -9,8 +10,8 @@ CREATE TABLE IF NOT EXISTS public.hire_sections (
   content JSONB NOT NULL DEFAULT '{}',
   order_index INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.hire_skills (
@@ -22,7 +23,8 @@ CREATE TABLE IF NOT EXISTS public.hire_skills (
   color TEXT DEFAULT '#8b5cf6',
   order_index INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.hire_experience (
@@ -38,7 +40,8 @@ CREATE TABLE IF NOT EXISTS public.hire_experience (
   achievements TEXT[],
   order_index INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.hire_contact_fields (
@@ -50,23 +53,24 @@ CREATE TABLE IF NOT EXISTS public.hire_contact_fields (
   options JSONB DEFAULT '[]',
   order_index INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
--- Disable Row Level Security for hire view tables to allow full access
-ALTER TABLE public.hire_sections DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.hire_skills DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.hire_experience DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.hire_contact_fields DISABLE ROW LEVEL SECURITY;
-
--- Add indexes for better performance
+-- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_hire_sections_type ON public.hire_sections(section_type);
 CREATE INDEX IF NOT EXISTS idx_hire_sections_order ON public.hire_sections(order_index);
 CREATE INDEX IF NOT EXISTS idx_hire_sections_active ON public.hire_sections(is_active);
 CREATE INDEX IF NOT EXISTS idx_hire_skills_category ON public.hire_skills(category);
 CREATE INDEX IF NOT EXISTS idx_hire_skills_order ON public.hire_skills(order_index);
+CREATE INDEX IF NOT EXISTS idx_hire_skills_active ON public.hire_skills(is_active);
 CREATE INDEX IF NOT EXISTS idx_hire_experience_order ON public.hire_experience(order_index);
+CREATE INDEX IF NOT EXISTS idx_hire_experience_active ON public.hire_experience(is_active);
+CREATE INDEX IF NOT EXISTS idx_hire_experience_current ON public.hire_experience(is_current);
 CREATE INDEX IF NOT EXISTS idx_hire_contact_fields_order ON public.hire_contact_fields(order_index);
+CREATE INDEX IF NOT EXISTS idx_hire_contact_fields_active ON public.hire_contact_fields(is_active);
+
+
 
 -- Create or replace the update trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -179,4 +183,5 @@ SELECT * FROM (VALUES
 ) AS v(field_type, label, placeholder, is_required, order_index, is_active)
 WHERE NOT EXISTS (SELECT 1 FROM public.hire_contact_fields LIMIT 1);
 
--- Note: Supabase realtime publications removed as we're using PostgreSQL directly
+-- Migration completed successfully for PostgreSQL
+-- All hire view tables, triggers, indexes, and default data created
