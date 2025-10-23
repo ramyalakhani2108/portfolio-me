@@ -218,7 +218,8 @@ export default function LandingPage() {
           full_name: profileData.full_name || "Developer",
           bio: profileData.bio || "Passionate developer",
           role: profileData.role || "Full-Stack Developer",
-          avatar_url: profileData.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
+          // Use image_data (base64) if available, otherwise avatar_url, otherwise default
+          avatar_url: profileData.image_data || profileData.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
           experience: profileData.experience,
           status: profileData.status,
         };
