@@ -287,29 +287,29 @@ export default function ProfilesManager() {
     setIsUploadingImage(true);
 
     try {
-      // Convert file to base64
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64Data = e.target?.result as string;
-        
-        // Show preview immediately
-        setPreviewImage(base64Data);
-
-        // Store base64 directly in image_data (NOT as file path)
+      // Upload file to backend
+      const formDataObj = new FormData();
+      formDataObj.append('file', file);
+      const response = await fetch(`${API_URL}/upload`, {
+        method: 'POST',
+        body: formDataObj,
+      });
+      const data = await response.json();
+      if (data.success && data.url) {
+        // Show preview
+        setPreviewImage(data.url);
+        // Set avatar_url in form data
         setFormData((prev) => ({
           ...prev,
-          image_data: base64Data, // ← Store base64 directly, not file path
+          avatar_url: data.url,
         }));
-
         toast({
           title: "Success",
           description: "Image uploaded successfully. Click Save Profile to confirm.",
         });
-        
-        setIsUploadingImage(false);
-      };
-      
-      reader.readAsDataURL(file);
+      } else {
+        throw new Error(data.error || "Failed to upload image");
+      }
     } catch (error) {
       console.error("Error uploading image:", error);
       toast({
@@ -318,6 +318,7 @@ export default function ProfilesManager() {
         variant: "destructive",
       });
       setPreviewImage(null);
+    } finally {
       setIsUploadingImage(false);
     }
   };
