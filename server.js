@@ -26,6 +26,8 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 // Static file serving for uploaded images
 app.use('/public', express.static(path.join(__dirname, 'public')));
+// Serve profile images directly at /profile-images/filename.jpg
+app.use('/profile-images', express.static(path.join(__dirname, 'public/profile-images')));
 
 // Create uploads directory if it doesn't exist
 const uploadDir = path.join(__dirname, 'public/profile-images');
@@ -59,15 +61,11 @@ const upload = multer({
 
 // PostgreSQL connection pool
 const pool = new Pool({
-  host: process.env.VITE_DB_HOST || 'localhost',
-  port: parseInt(process.env.VITE_DB_PORT || '5432'),
-  database: process.env.VITE_DB_NAME || 'portfolio',
-  user: process.env.VITE_DB_USER || 'postgres',
-  password: process.env.VITE_DB_PASSWORD || '',
+  connectionString: `postgres://${process.env.VITE_DB_USER}:${process.env.VITE_DB_PASSWORD}@${process.env.VITE_DB_HOST}:${process.env.VITE_DB_PORT}/${process.env.VITE_DB_NAME}?sslmode=require`,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
-  ssl: process.env.VITE_DB_HOST && process.env.VITE_DB_HOST.includes('neon') ? { rejectUnauthorized: false } : false,
+  ssl: true,
 });
 
 // Test database connection
