@@ -296,9 +296,10 @@ export default function ProfilesManager() {
       });
       const data = await response.json();
       if (data.success && data.url) {
-        // Show preview
-        setPreviewImage(data.url);
-        // Set avatar_url in form data
+        // Use full URL for preview
+        const fullUrl = data.url.startsWith('http') ? data.url : `${API_URL.replace(/\/api$/, '')}${data.url}`;
+        setPreviewImage(fullUrl);
+        // Set avatar_url in form data (keep as relative URL for backend)
         setFormData((prev) => ({
           ...prev,
           avatar_url: data.url,
