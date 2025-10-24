@@ -208,7 +208,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     }
 
     // Generate URL for the uploaded file
-    const fileUrl = `/public/profile-images/${req.file.filename}`;
+    const fileUrl = `/profile-images/${req.file.filename}`;
     
     res.json({
       success: true,
