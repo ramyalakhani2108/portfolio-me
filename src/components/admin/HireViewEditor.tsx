@@ -974,8 +974,8 @@ export default function HireViewEditor() {
         is_active: true,
       };
 
-      // Validate experience data before sending to database
-      validateExperienceData({ ...newExperience, id: "temp" });
+      // Validate experience data before sending to database (don't include temp id)
+      validateExperienceData(newExperience);
 
       // Show loading state
       setIsSaving(true);
@@ -984,18 +984,28 @@ export default function HireViewEditor() {
         description: "Please wait...",
       });
 
-      const { data, error } = await db
-        .from("hire_experience")
-        .insert([newExperience])
-        .select();
+      // Use REST API to insert experience (PostgreSQL)
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/db/hire_experience`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newExperience),
+        },
+      );
 
-      if (error) {
+      if (!response.ok) {
+        const error = await response.json();
         console.error("Add experience error:", error);
-        throw new Error(`Database error: ${error.message}`);
+        throw new Error(
+          error.error || `HTTP error! status: ${response.status}`,
+        );
       }
 
-      if (data && data.length > 0) {
-        const newExp = data[0];
+      const data = await response.json();
+
+      if (data.data && data.data.length > 0) {
+        const newExp = data.data[0];
         setExperiences((prev) => [...prev, newExp]);
         console.log("Experience added successfully:", newExp);
         toast({
@@ -1090,122 +1100,52 @@ export default function HireViewEditor() {
         prev.map((exp) => (exp.id === expId ? updatedExp : exp)),
       );
 
-      const { data, error } = await db
-        .from("hire_experience")
-        .update(updates)
-        .eq("id", expId)
-        .select();
+      // Use REST API to update experience (PostgreSQL)
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/db/hire_experience/${expId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        },
+      );
 
-      if (error) {
-        console.error("Experience update error:", error);
+      if (!response.ok) {
         // Revert optimistic update
         setExperiences((prev) =>
           prev.map((exp) => (exp.id === expId ? originalExp : exp)),
         );
-        throw new Error(`Database error: ${error.message}`);
+        const error = await response.json();
+        console.error("Experience update error:", error);
+        throw new Error(
+          error.error || `HTTP error! status: ${response.status}`,
+        );
       }
+
+      const data = await response.json();
 
       // Check if any rows were updated
-      if (!data || data.length === 0) {
+      if (!data.data || data.data.length === 0) {
         console.error("No rows updated - experience may not exist");
-
-        // Check if experience exists
-        const { data: existingExp, error: checkError } = await db
-          .from("hire_experience")
-          .select("id")
-          .eq("id", expId)
-          .single();
-
-        if (checkError) {
-          if (checkError.code === "PGRST116") {
-            // Record not found
-            console.error("Experience no longer exists in database");
-            // Revert optimistic update
-            setExperiences((prev) =>
-              prev.map((exp) => (exp.id === expId ? originalExp : exp)),
-            );
-            await fetchHireViewData();
-            throw new Error(
-              `Experience with id ${expId} no longer exists in the database. Data has been refreshed.`,
-            );
-          } else {
-            console.error("Error checking experience existence:", checkError);
-            // Revert optimistic update
-            setExperiences((prev) =>
-              prev.map((exp) => (exp.id === expId ? originalExp : exp)),
-            );
-            throw new Error(
-              `Failed to verify experience existence: ${checkError.message}`,
-            );
-          }
-        }
-
-        // If we get here, the experience exists but wasn't updated (unlikely)
-        // Try again with a different approach - full update
-        const { data: retryData, error: retryError } = await db
-          .from("hire_experience")
-          .update(updatedExp)
-          .eq("id", expId)
-          .select();
-
-        if (retryError) {
-          console.error("Retry experience update error:", retryError);
-          // Revert optimistic update
-          setExperiences((prev) =>
-            prev.map((exp) => (exp.id === expId ? originalExp : exp)),
-          );
-          throw new Error(`Database retry error: ${retryError.message}`);
-        }
-
-        if (!retryData || retryData.length === 0) {
-          // Still no success, revert and throw error
-          setExperiences((prev) =>
-            prev.map((exp) => (exp.id === expId ? originalExp : exp)),
-          );
-          throw new Error(
-            "Update operation failed after retry - no rows were updated",
-          );
-        }
-
-        // Update local state with retry data
-        const updatedExpData = retryData[0];
+        // Revert optimistic update
         setExperiences((prev) =>
-          prev.map((exp) => (exp.id === expId ? updatedExpData : exp)),
+          prev.map((exp) => (exp.id === expId ? originalExp : exp)),
         );
-
-        console.log(
-          `Experience ${expId} updated successfully after retry:`,
-          updatedExpData,
+        throw new Error(
+          `Experience with id ${expId} could not be updated. It may no longer exist.`,
         );
-        toast({
-          title: "Success",
-          description: "Experience updated successfully.",
-        });
-        return;
       }
 
-      // Update local state with server data
-      const updatedExpData = data[0];
-      setExperiences((prev) =>
-        prev.map((exp) => (exp.id === expId ? updatedExpData : exp)),
-      );
-
-      console.log(`Experience ${expId} updated successfully:`, updatedExpData);
-      toast({
-        title: "Success",
-        description: "Experience updated successfully.",
-      });
+      console.log("Experience updated successfully:", data.data[0]);
     } catch (error: any) {
       console.error("Error updating experience:", error);
-      // Ensure we revert optimistic update on any error
-      setExperiences((prev) =>
-        prev.map((exp) => (exp.id === expId ? originalExp : exp)),
-      );
       toast({
-        title: "Error updating experience",
-        description: error.message || "Failed to save experience changes.",
+        title: "Update Failed",
+        description: error.message || "Failed to update experience.",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1228,18 +1168,24 @@ export default function HireViewEditor() {
       // Immediate optimistic update
       setExperiences((prev) => prev.filter((exp) => exp.id !== expId));
 
-      const { error } = await db
-        .from("hire_experience")
-        .delete()
-        .eq("id", expId);
+      // Use REST API to delete experience (PostgreSQL)
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/db/hire_experience/${expId}`,
+        {
+          method: "DELETE",
+        },
+      );
 
-      if (error) {
-        console.error("Delete experience error:", error);
+      if (!response.ok) {
         // Rollback optimistic update
         setExperiences((prev) =>
           [...prev, expToDelete].sort((a, b) => a.order_index - b.order_index),
         );
-        throw new Error(`Database error: ${error.message}`);
+        const error = await response.json();
+        console.error("Delete experience error:", error);
+        throw new Error(
+          error.error || `HTTP error! status: ${response.status}`,
+        );
       }
 
       console.log(`Experience ${expId} deleted successfully`);

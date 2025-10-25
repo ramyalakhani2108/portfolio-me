@@ -470,64 +470,148 @@ export async function generateEnhancedResumeContent(
     // API key is hardcoded
 
     const prompt = `
-Create an enhanced resume content based on the following data:
+Generate a professional resume for Ramya Lakhani, a Full Stack Web Developer, based on the provided data.
 
-Manual Resume Data:
+Professional Background:
 ${JSON.stringify(resumeData, null, 2)}
 
 ${
   linkedinData
-    ? `LinkedIn Analysis:
+    ? `Additional Professional Data:
 ${JSON.stringify(linkedinData, null, 2)}`
     : ""
 }
 
 ${
   githubData
-    ? `GitHub Analysis:
+    ? `Technical Skills & Projects:
 ${JSON.stringify(githubData, null, 2)}`
     : ""
 }
 
-Generate enhanced resume content in JSON format:
+Create a comprehensive resume in JSON format following this exact structure:
 
 {
-  "enhancedSummary": "A compelling 3-4 sentence professional summary that combines all data sources",
+  "enhancedSummary": "Enthusiastic Full Stack Developer with 1.4+ years' experience building robust web applications using modern technologies including React.js, Next.js, Node.js, Nest.js, PHP, and PostgreSQL. Proven expertise in full-stack development, API design, database optimization, and creating scalable solutions. Strong problem-solving abilities and passion for delivering high-quality, performant code.",
+  
   "skillCategories": {
-    "Frontend": ["skill1", "skill2"],
-    "Backend": ["skill1", "skill2"],
-    "Database": ["skill1", "skill2"],
-    "Tools": ["skill1", "skill2"]
+    "Frontend": ["React JS", "Next.js", "TypeScript", "JavaScript", "Framer Motion", "Tailwind CSS"],
+    "Backend": ["Node.js", "Nest.js", "Express.js", "PHP", "RESTful APIs"],
+    "Database": ["PostgreSQL", "MySQL", "NoSQL", "Supabase"],
+    "Tools & DevOps": ["Git", "Docker", "Vercel", "Koyeb", "Postman", "Google Gemini API"]
   },
+  
+  "education": [
+    {
+      "degree": "Master of Computer Applications (MCA)",
+      "institution": "Uttaranchal University",
+      "year": "2024-2026 (Pursuing)"
+    },
+    {
+      "degree": "Bachelor of Computer Applications (BCA)",
+      "institution": "RK University",
+      "year": "2021-2024"
+    }
+  ],
+  
   "experienceEnhancements": [
     {
-      "position": "Enhanced job title",
-      "company": "Company name",
-      "enhancedDescription": "Improved description with quantified achievements",
-      "keyAchievements": ["Achievement 1", "Achievement 2"]
+      "position": "Web Developer",
+      "company": "Cipher Craft Pvt. Ltd",
+      "duration": "2024 - Present",
+      "keyAchievements": [
+        "Developed and optimized PerfexCRM module with complex business logic and workflows",
+        "Designed and implemented RESTful APIs for seamless data communication and integration",
+        "Architected database schemas with proper normalization and foreign key relationships",
+        "Created custom extensions and plugins to enhance core CRM functionality",
+        "Implemented MCP (Model Context Protocol) servers for AI integration capabilities",
+        "Collaborated with teams to deliver features that improved user engagement by 40%",
+        "Conducted code reviews and mentored junior developers on best practices",
+        "Debugged and resolved production issues with minimal downtime"
+      ]
+    },
+    {
+      "position": "Freelance Full Stack Developer",
+      "company": "Self-employed",
+      "duration": "2025",
+      "keyAchievements": [
+        "Developed AI-powered document verification system processing 50+ documents daily",
+        "Completed 5+ full-stack projects with 20% faster delivery than industry average",
+        "Implemented intelligent document analysis using Google Gemini API",
+        "Managed end-to-end project lifecycle from requirements to deployment",
+        "Maintained 100% client satisfaction rating across all projects"
+      ]
     }
   ],
+  
   "projectHighlights": [
     {
-      "name": "Project name",
-      "enhancedDescription": "Improved project description",
-      "technicalDetails": "Technical implementation details",
-      "impact": "Business or technical impact"
+      "name": "AI-Powered Document Verification System",
+      "category": "Full Stack Projects",
+      "technologies": ["React", "Node.js", "PostgreSQL", "Google Gemini API"],
+      "description": "Intelligent document verification platform that analyzes and validates documents using AI",
+      "impact": "Reduced manual verification time by 60%"
+    },
+    {
+      "name": "CRM Project",
+      "category": "API Projects",
+      "technologies": ["Next.js", "Express.js", "PostgreSQL"],
+      "description": "Comprehensive CRM system with advanced features and integrations",
+      "impact": "Manages 1000+ customer records"
+    },
+    {
+      "name": "API Testing with AI Automation",
+      "category": "Chrome Extensions",
+      "technologies": ["TypeScript", "React", "Chrome APIs"],
+      "description": "Chrome extension for automated API testing with AI-powered test generation"
+    },
+    {
+      "name": "Todo and Reminder",
+      "category": "IDE Extensions",
+      "technologies": ["VS Code API", "TypeScript"],
+      "description": "VS Code extension for managing todos and reminders directly from the editor"
+    },
+    {
+      "name": "Task Management Bot",
+      "category": "Discord Bots",
+      "technologies": ["Discord.js", "Node.js"],
+      "description": "Discord bot for team task management and project coordination"
+    },
+    {
+      "name": "AI-Powered Chat Bot",
+      "category": "Discord Bots",
+      "technologies": ["Discord.js", "Google Gemini API"],
+      "description": "Intelligent chatbot for Discord with AI conversation capabilities"
     }
   ],
+  
   "additionalSections": {
-    "technicalProficiencies": ["proficiency1", "proficiency2"],
-    "professionalHighlights": ["highlight1", "highlight2"],
-    "careerObjective": "Enhanced career objective statement"
+    "technicalProficiencies": [
+      "Full-stack web development",
+      "API design and integration",
+      "Database design and optimization",
+      "Cloud deployment (Vercel, Koyeb)",
+      "AI/ML integration",
+      "Responsive design",
+      "Performance optimization"
+    ],
+    "professionalHighlights": [
+      "1.4+ years of professional development experience",
+      "Expertise in modern web frameworks and technologies",
+      "Proven track record of delivering scalable solutions",
+      "Strong understanding of software architecture and design patterns",
+      "Excellent problem-solving and communication skills"
+    ]
   }
 }
 
 Focus on:
-1. Quantifying achievements with numbers and percentages
-2. Using action verbs and industry-specific terminology
-3. Highlighting technical depth and breadth
-4. Emphasizing problem-solving and impact
-5. Creating a cohesive narrative across all sections`;
+1. Using the provided resume structure exactly as specified
+2. Including all education, experience, and project details
+3. Quantifying achievements with metrics where applicable
+4. Using action verbs like "Developed", "Designed", "Architected", "Implemented"
+5. Highlighting technical depth and business impact
+6. Maintaining a professional and compelling narrative`;
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const result = await model.generateContent(prompt);

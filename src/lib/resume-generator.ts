@@ -1,5 +1,5 @@
 import jsPDF from "jspdf";
-import { supabase } from "../../supabase/supabase";
+import { db } from "./db";
 import {
   queryGemini,
   scrapeLinkedInProfile,
@@ -15,23 +15,23 @@ export async function generateEnhancedResumePDF(includeLinkedIn = false) {
     // Fetch latest data from database
     const [profileRes, skillsRes, experiencesRes, projectsRes, resumeRes] =
       await Promise.all([
-        supabase.from("profiles").select("*").single(),
-        supabase
+        db.from("profiles").select("*").single(),
+        db
           .from("hire_skills")
           .select("*")
           .eq("is_active", true)
           .order("order_index"),
-        supabase
+        db
           .from("hire_experience")
           .select("*")
           .eq("is_active", true)
           .order("order_index"),
-        supabase
+        db
           .from("projects")
           .select("*")
           .eq("is_active", true)
           .order("order_index"),
-        supabase.from("resume_data").select("*").single(),
+        db.from("resume_data").select("*").single(),
       ]);
 
     const profile = profileRes.data;
@@ -405,6 +405,52 @@ export async function generateEnhancedResumePDF(includeLinkedIn = false) {
         },
       );
       yPosition += 10;
+    }
+
+    // Education Section from AI enhancements
+    if (aiEnhancements?.education && aiEnhancements.education.length > 0) {
+      if (yPosition > pageHeight - 80) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(44, 62, 80);
+      pdf.text("EDUCATION", 20, yPosition);
+
+      pdf.setLineWidth(0.5);
+      pdf.setDrawColor(52, 152, 219);
+      pdf.line(20, yPosition + 2, 60, yPosition + 2);
+      yPosition += 12;
+
+      aiEnhancements.education.forEach((edu: any) => {
+        if (yPosition > pageHeight - 40) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+
+        // Degree and Institution
+        pdf.setFontSize(12);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(44, 62, 80);
+        pdf.text(edu.degree, 20, yPosition);
+        yPosition += 6;
+
+        // Institution name
+        pdf.setFontSize(11);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(52, 152, 219);
+        pdf.text(edu.institution, 20, yPosition);
+
+        // Year
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(edu.year, pageWidth - 20, yPosition, { align: "right" });
+        yPosition += 10;
+      });
+
+      yPosition += 5;
     }
 
     // Enhanced Experience Section - Combine database and LinkedIn data
@@ -920,23 +966,23 @@ export async function generateResumePDF() {
     // Fetch latest data from database
     const [profileRes, skillsRes, experiencesRes, projectsRes, resumeRes] =
       await Promise.all([
-        supabase.from("profiles").select("*").single(),
-        supabase
+        db.from("profiles").select("*").single(),
+        db
           .from("hire_skills")
           .select("*")
           .eq("is_active", true)
           .order("order_index"),
-        supabase
+        db
           .from("hire_experience")
           .select("*")
           .eq("is_active", true)
           .order("order_index"),
-        supabase
+        db
           .from("projects")
           .select("*")
           .eq("is_active", true)
           .order("order_index"),
-        supabase.from("resume_data").select("*").single(),
+        db.from("resume_data").select("*").single(),
       ]);
 
     const profile = profileRes.data;

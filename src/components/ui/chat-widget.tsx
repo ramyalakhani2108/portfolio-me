@@ -22,7 +22,6 @@ import { Input } from "./input";
 import { cn } from "@/lib/utils";
 import { queryGemini, validatePortfolioQuery } from "@/lib/gemini";
 import { useToast } from "./use-toast";
-import { supabase } from "../../../supabase/supabase";
 
 interface ChatMessage {
   id: string;

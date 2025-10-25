@@ -18,7 +18,7 @@ import {
   Send,
   CheckCircle,
 } from "lucide-react";
-import { supabase } from "../../../supabase/supabase";
+import { db } from "@/lib/db";
 import { useToast } from "@/components/ui/use-toast";
 
 interface Skill {
@@ -76,15 +76,15 @@ export default function EmployerResume({
   const fetchData = async () => {
     try {
       const [skillsRes, experiencesRes, projectsRes] = await Promise.all([
-        supabase
+        db
           .from("skills")
           .select("*")
           .order("proficiency", { ascending: false }),
-        supabase
+        db
           .from("experiences")
           .select("*")
           .order("order_index", { ascending: true }),
-        supabase
+        db
           .from("projects")
           .select("*")
           .eq("featured", true)
@@ -104,7 +104,7 @@ export default function EmployerResume({
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("contact_submissions").insert({
+      const { error } = await db.from("contact_submissions").insert({
         name: contactForm.name,
         email: contactForm.email,
         subject: contactForm.subject,

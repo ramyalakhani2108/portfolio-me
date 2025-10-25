@@ -792,22 +792,22 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         interests: resumeData?.interests || "",
       };
 
-      logOperation("Attempting to save resume data to Supabase");
+      logOperation("Attempting to save resume data to database");
 
-      // Save to Supabase - RLS is now disabled for this table
-      const { error } = await supabase.from("resume_data").upsert({
+      // Save to database
+      const { error } = await db.from("resume_data").upsert({
         id: "main",
         content: dataToSave,
-        user_id: null, // Set to null since RLS is disabled
+        user_id: null,
         updated_at: new Date().toISOString(),
       });
 
       if (error) {
-        logOperation(`Supabase save error: ${error.message}`, false);
+        logOperation(`Database save error: ${error.message}`, false);
         throw error;
       }
 
-      logOperation("Resume data saved successfully to Supabase");
+      logOperation("Resume data saved successfully to database");
       toast({
         title: "Resume Data Saved",
         description: "Your resume information has been updated successfully.",
@@ -980,7 +980,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       );
 
       // Update profile in database with the storage path (not full URL)
-      const { error: updateError } = await supabase.from("profiles").upsert({
+      const { error: updateError } = await db.from("profiles").upsert({
         id: "main",
         avatar_url: finalFileName, // Store path, not full URL
         updated_at: new Date().toISOString(),
@@ -1027,18 +1027,18 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       // Fetch latest data from database
       const [profileRes, skillsRes, experiencesRes, projectsRes] =
         await Promise.all([
-          supabase.from("profiles").select("*").single(),
-          supabase
+          db.from("profiles").select("*").single(),
+          db
             .from("hire_skills")
             .select("*")
             .eq("is_active", true)
             .order("order_index"),
-          supabase
+          db
             .from("hire_experience")
             .select("*")
             .eq("is_active", true)
             .order("order_index"),
-          supabase
+          db
             .from("projects")
             .select("*")
             .eq("is_active", true)
