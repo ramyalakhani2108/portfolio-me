@@ -1049,9 +1049,16 @@ export default function DynamicHireView({
           </h3>
 
           <div className="space-y-4">
-            {/* Standard Resume Button */}
+            {/* Pre-built Standard Resume Download Button */}
             <Button
-              onClick={() => generatePDF(false)}
+              onClick={() => {
+                const link = document.createElement("a");
+                link.href = "/resume/Ramya%20lakhani.pdf";
+                link.download = "Ramya_lakhani_Resume.pdf";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
               variant="outline"
               className={`w-full flex items-center gap-2 ${
                 isDarkMode
@@ -1060,8 +1067,9 @@ export default function DynamicHireView({
               }`}
             >
               <Download className="w-4 h-4" />
-              Standard Resume
+              Download Standard Resume
             </Button>
+
 
             {/* Enhanced AI Resume Button */}
             <Button
@@ -1088,16 +1096,15 @@ export default function DynamicHireView({
             <h4
               className={`font-medium mb-2 ${isDarkMode ? "text-gray-200" : "text-blue-900"}`}
             >
-              Enhanced Resume Features:
+              Resume Options:
             </h4>
             <ul
               className={`text-sm space-y-1 ${isDarkMode ? "text-gray-300" : "text-blue-700"}`}
             >
-              <li>• AI-powered content enhancement</li>
+              <li>• <strong>Standard Resume:</strong> Pre-built professional resume</li>
+              <li>• <strong>Enhanced AI Resume:</strong> AI-powered with LinkedIn integration</li>
               <li>• LinkedIn profile integration (if URL provided)</li>
               <li>• Professional formatting and styling</li>
-              <li>• Optimized skill categorization</li>
-              <li>• Enhanced project descriptions</li>
             </ul>
           </div>
 
