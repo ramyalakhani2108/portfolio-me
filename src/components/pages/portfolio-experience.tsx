@@ -77,41 +77,7 @@ export default function PortfolioExperience({
   });
   const [skills, setSkills] = useState<Skill[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [blogPosts] = useState<BlogPost[]>([
-    {
-      id: "1",
-      title: "Building Scalable React Applications",
-      excerpt:
-        "Best practices and patterns for creating maintainable React apps that scale with your team.",
-      content: "",
-      published_at: "2024-01-15",
-      tags: ["React", "Architecture", "Best Practices"],
-      featured_image:
-        "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&q=80",
-    },
-    {
-      id: "2",
-      title: "The Future of Web Development",
-      excerpt:
-        "Exploring emerging technologies and trends that will shape the next decade of web development.",
-      content: "",
-      published_at: "2024-01-10",
-      tags: ["Web Development", "Future Tech", "Trends"],
-      featured_image:
-        "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80",
-    },
-    {
-      id: "3",
-      title: "Mastering CSS Grid and Flexbox",
-      excerpt:
-        "A comprehensive guide to modern CSS layout techniques with practical examples.",
-      content: "",
-      published_at: "2024-01-05",
-      tags: ["CSS", "Layout", "Tutorial"],
-      featured_image:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80",
-    },
-  ]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -199,7 +165,7 @@ export default function PortfolioExperience({
 
   const fetchData = async () => {
     try {
-      const [skillsRes, projectsRes] = await Promise.all([
+      const [skillsRes, projectsRes, blogsRes] = await Promise.all([
         db
           .from("skills")
           .select("*")
@@ -208,10 +174,19 @@ export default function PortfolioExperience({
           .from("projects")
           .select("*")
           .order("order_index", { ascending: true }),
+        db
+          .from("blogs")
+          .select("*")
+          .eq("is_active", true)
+          .order("published_at", { ascending: false })
+          .limit(3),
       ]);
 
       if (skillsRes.data) setSkills(skillsRes.data);
       if (projectsRes.data) setProjects(projectsRes.data);
+      if (blogsRes.data && blogsRes.data.length > 0) {
+        setBlogPosts(blogsRes.data);
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
     }
