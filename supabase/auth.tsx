@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, signIn as authSignIn, signUp as authSignUp, signOut as authSignOut, getSession } from "../src/lib/auth";
-import { db, storage } from "../src/lib/db";
+import { db } from "../src/lib/db";
 
 type AuthContextType = {
   user: User | null;
@@ -113,28 +113,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const fileName = `${userId}/avatar.webp`;
 
-    // Upload to storage
-    const { error: uploadError } = await storage
-      .from("public-profile-images")
-      .upload(fileName, webpBlob, {
-        cacheControl: "3600",
-        upsert: true,
-        contentType: "image/webp",
+    // Upload to local server
+    const formData = new FormData();
+    formData.append("file", webpBlob, fileName);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/upload-profile-image`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Upload failed");
+      }
+
+      const uploadData = await response.json();
+
+      // Update profile in database
+      const { error: profileError } = await db.from("profiles").upsert({
+        id: userId,
+        full_name: fullName,
+        avatar_url: uploadData.fileName, // Use the returned path
+        updated_at: new Date().toISOString(),
       });
 
-    if (uploadError) throw uploadError;
+      if (profileError) throw profileError;
 
-    // Update profile in database
-    const { error: profileError } = await db.from("profiles").upsert({
-      id: userId,
-      full_name: fullName,
-      avatar_url: fileName,
-      updated_at: new Date().toISOString(),
-    });
-
-    if (profileError) throw profileError;
-
-    return fileName;
+      return uploadData.url;
+    } catch (uploadError: any) {
+      throw new Error(uploadError.message || "Upload failed");
+    }
   };
 
   const signIn = async (email: string, password: string) => {

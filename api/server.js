@@ -247,6 +247,32 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+// Profile image upload endpoint
+app.post('/api/upload-profile-image', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    // Generate URL for the uploaded file
+    const fileUrl = `/profile-images/${req.file.filename}`;
+    
+    res.json({
+      success: true,
+      url: fileUrl,
+      fileName: req.file.filename,
+      size: req.file.size,
+      message: 'Profile image uploaded successfully'
+    });
+  } catch (error) {
+    console.error('Profile image upload error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to upload profile image' 
+    });
+  }
+});
+
 // Admin sign out
 app.post('/api/auth/admin/signout', async (req, res) => {
   try {

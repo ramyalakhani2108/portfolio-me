@@ -61,7 +61,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { db } from "@/lib/db";
-import { supabase } from "../../../supabase/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "../../../supabase/auth";
 import { getSession, signOut as authSignOut } from "@/lib/auth";
@@ -196,41 +195,30 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     // Session refresh on mount to ensure valid tokens
     const refreshSessionOnMount = async () => {
       try {
-        logOperation("Refreshing session on admin panel mount");
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.refreshSession();
-        if (session) {
-          logOperation("Session refreshed successfully on mount");
-        } else if (error) {
-          logOperation(`Session refresh failed on mount: ${error.message}`);
+        logOperation("Checking session on admin panel mount");
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          logOperation("Session token found on mount");
+        } else {
+          logOperation("No session token found on mount - user may need to login", false);
         }
       } catch (error: any) {
-        logOperation(`Session refresh error on mount: ${error.message}`, false);
+        logOperation(`Session check error on mount: ${error.message}`, false);
       }
     };
 
     refreshSessionOnMount();
 
-    // Auth state listener - only redirect on explicit SIGNED_OUT events
-    const {
-      data: { subscription: authSubscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      logOperation(`Auth state change: ${event}`);
-
-      if (event === "SIGNED_OUT") {
-        // Only redirect on explicit logout
-        logOperation("Explicit sign out detected, redirecting to login");
-        localStorage.removeItem("adminAuthenticated");
+    // Auth state listener - check token validity
+    const checkAuthStatus = () => {
+      const isAdminAuthenticated = localStorage.getItem("adminAuthenticated") === "true";
+      if (!isAdminAuthenticated) {
+        logOperation("Admin authentication status check: not authenticated");
         onLogout();
-      } else if (event === "TOKEN_REFRESHED") {
-        logOperation("Token refreshed successfully");
-      } else if (event === "SIGNED_IN") {
-        logOperation("User signed in");
+      } else {
+        logOperation("Admin authentication status check: authenticated");
       }
-      // Do NOT redirect on other events like token refresh failures
-    });
+    };
 
     // Session timeout implementation
     const checkSession = () => {
@@ -244,24 +232,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           description: "You have been logged out due to inactivity.",
           variant: "destructive",
         });
-        // Explicitly sign out to trigger SIGNED_OUT event
-        supabase.auth.signOut();
+        // Sign out
+        localStorage.removeItem("adminAuthenticated");
+        onLogout();
       }
     };
 
-    // Check session every minute and refresh every 5 minutes
+    // Check session every minute
     const sessionInterval = setInterval(checkSession, 60000);
-    const refreshInterval = setInterval(async () => {
-      try {
-        logOperation("Periodic session refresh");
-        await supabase.auth.refreshSession();
-      } catch (error: any) {
-        logOperation(
-          `Periodic session refresh failed: ${error.message}`,
-          false,
-        );
-      }
-    }, 300000); // 5 minutes
 
     // Update last activity on user interaction
     const updateActivity = () => setLastActivity(Date.now());
@@ -270,9 +248,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     document.addEventListener("scroll", updateActivity);
 
     return () => {
-      authSubscription?.unsubscribe();
       clearInterval(sessionInterval);
-      clearInterval(refreshInterval);
       document.removeEventListener("mousedown", updateActivity);
       document.removeEventListener("keydown", updateActivity);
       document.removeEventListener("scroll", updateActivity);
@@ -292,34 +268,34 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const fetchData = async () => {
     try {
-      logOperation("Starting enhanced data fetch with Supabase validation");
+      logOperation("Starting data fetch with database validation");
 
-      // First, validate Supabase connection with multiple table checks
-      const { data: healthCheck, error: healthError } = await supabase
+      // First, validate database connection with multiple table checks
+      const { data: healthCheck, error: healthError } = await db
         .from("profiles")
         .select("id")
         .limit(1);
 
       if (healthError) {
         logOperation(
-          `Supabase connection failed: ${healthError.message}`,
+          `Database connection failed: ${healthError.message}`,
           false,
         );
         toast({
           title: "Database Connection Error",
           description:
-            "Unable to connect to Supabase. Please check your connection.",
+            "Unable to connect to the database. Please check your connection.",
           variant: "destructive",
         });
         return;
       }
 
-      logOperation("Supabase connection validated successfully");
+      logOperation("Database connection validated successfully");
 
       // Fetch contact submissions with enhanced error handling and additional fields
-      const { data: contactData, error: contactError } = await supabase
+      const { data: contactData, error: contactError } = await db
         .from("contact_submissions")
-        .select("*, priority, tags")
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(50); // Limit for better performance
 
@@ -341,9 +317,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       }
 
       // Fetch analytics with enhanced error handling and additional fields
-      const { data: analyticsData, error: analyticsError } = await supabase
+      const { data: analyticsData, error: analyticsError } = await db
         .from("visitor_analytics")
-        .select("*, ip_address, country, device_type, time_spent")
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(200); // Increased limit for better analytics
 
@@ -393,7 +369,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
       // Show success toast only if no errors occurred
       if (!contactError && !analyticsError) {
-        logOperation("All data fetched successfully from Supabase");
+        logOperation("All data fetched successfully from database");
       }
     } catch (error: any) {
       console.error("Critical error fetching data:", error);
@@ -430,7 +406,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     try {
       logOperation(`Marking message ${id} as read`);
 
-      const { error } = await supabase
+      const { error } = await db
         .from("contact_submissions")
         .update({ status: "read" })
         .eq("id", id);
@@ -512,17 +488,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     try {
       logOperation("Fetching resume data");
 
-      // Validate session before fetching
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-      if (authError || !user) {
-        logOperation("Authentication check failed during resume fetch", false);
-        // Don't throw error, just use defaults
-      }
+      // Session is managed by auth context - no need to validate again
+      logOperation("Resume data fetch initiated");
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("resume_data")
         .select("*")
         .single();
@@ -657,7 +626,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       logOperation("Fetching profile image from unified storage system");
 
       // Always fetch from database first to get the latest server-side image path
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("profiles")
         .select("avatar_url")
         .eq("id", "main")
@@ -670,16 +639,13 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           // It's already a full URL (legacy)
           imageUrl = data.avatar_url;
         } else {
-          // It's a storage path, generate public URL with cache busting
-          const { data: urlData } = supabase.storage
-            .from("public-profile-images")
-            .getPublicUrl(data.avatar_url);
-
-          imageUrl = `${urlData.publicUrl}?v=${Date.now()}`;
+          // It's a local storage path, generate public URL with cache busting
+          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+          imageUrl = `${baseUrl}/public/profile-images/${data.avatar_url}?v=${Date.now()}`;
         }
 
         setProfileImage(imageUrl);
-        logOperation("Profile image fetched from unified storage system");
+        logOperation("Profile image fetched from local storage system");
       } else {
         // Use default image if no image found
         const defaultImage =
@@ -701,66 +667,16 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const validateAndRefreshSession = async (retryCount = 0): Promise<any> => {
     try {
-      // Check session first to validate token expiry
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      // If session exists and token is not expired, return user
-      if (
-        session?.user &&
-        !sessionError &&
-        session.expires_at &&
-        session.expires_at > Date.now() / 1000
-      ) {
-        return session.user;
+      // Check if admin token exists
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        logOperation("No auth token found - authentication required");
+        throw new Error("Session validation failed - authentication required");
       }
 
-      // If session is expired or invalid, try to refresh silently
-      logOperation(
-        `Session expired or invalid, attempting silent refresh (attempt ${retryCount + 1})`,
-      );
-
-      const {
-        data: { session: refreshedSession },
-        error: refreshError,
-      } = await supabase.auth.refreshSession();
-
-      if (refreshedSession?.user && !refreshError) {
-        logOperation("Session refreshed successfully");
-        return refreshedSession.user;
-      }
-
-      // Only attempt re-authentication as last resort and only once
-      if (retryCount === 0) {
-        const isAdminAuthenticated =
-          localStorage.getItem("adminAuthenticated") === "true";
-
-        if (isAdminAuthenticated) {
-          logOperation("Attempting admin re-authentication as last resort");
-
-          try {
-            const { data: authData, error: signInError } =
-              await supabase.auth.signInWithPassword({
-                email: "Art1204",
-                password: "Art@1204",
-              });
-
-            if (authData?.user && !signInError) {
-              logOperation("Admin re-authentication successful");
-              return authData.user;
-            }
-          } catch (reAuthError) {
-            logOperation(
-              `Admin re-authentication failed: ${reAuthError}`,
-              false,
-            );
-          }
-        }
-      }
-
-      throw new Error("Session validation failed - authentication required");
+      // If we have a token, assume session is valid
+      logOperation("Session validated - token present");
+      return { id: "admin", email: "admin" };
     } catch (error: any) {
       logOperation(`Session validation error: ${error.message}`, false);
       throw error;
@@ -939,42 +855,28 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       const timestamp = Date.now();
       logOperation(`Uploading image: ${finalFileName}`);
 
-      // Remove old image from storage if it exists
-      try {
-        const { error: deleteError } = await supabase.storage
-          .from("public-profile-images")
-          .remove([finalFileName]);
+      // Upload to local server
+      const formData = new FormData();
+      formData.append("file", finalBlob, finalFileName);
 
-        if (!deleteError) {
-          logOperation(`Removed old image: ${finalFileName}`);
+      const uploadResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/upload-profile-image`,
+        {
+          method: "POST",
+          body: formData,
         }
-      } catch (cleanupError) {
-        logOperation(`Old image cleanup skipped: ${cleanupError}`, false);
-        // Don't fail the upload if cleanup fails
+      );
+
+      if (!uploadResponse.ok) {
+        const uploadError = await uploadResponse.json();
+        logOperation(`Local storage upload failed: ${uploadError.error}`, false);
+        throw new Error(uploadError.error || "Upload failed");
       }
 
-      // Upload to public Supabase Storage bucket with enhanced options (no auth required)
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("public-profile-images")
-        .upload(finalFileName, finalBlob, {
-          cacheControl: "3600",
-          upsert: true,
-          contentType: "image/webp",
-        });
+      const uploadData = await uploadResponse.json();
+      logOperation("File uploaded to local storage successfully");
 
-      if (uploadError) {
-        logOperation(`Storage upload failed: ${uploadError.message}`, false);
-        throw uploadError;
-      }
-
-      logOperation("File uploaded to public storage successfully");
-
-      // Get public URL with cache busting
-      const { data: urlData } = supabase.storage
-        .from("public-profile-images")
-        .getPublicUrl(finalFileName);
-
-      const publicUrlWithCacheBust = `${urlData.publicUrl}?v=${timestamp}`;
+      const publicUrlWithCacheBust = `${uploadData.url}?v=${timestamp}`;
       logOperation(
         `Generated public URL with cache busting: ${publicUrlWithCacheBust}`,
       );

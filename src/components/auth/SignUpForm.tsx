@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { useNavigate, Link } from "react-router-dom";
 import AuthLayout from "./AuthLayout";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "../../../supabase/supabase";
 import { Upload, Loader2 } from "lucide-react";
 
 export default function SignUpForm() {
@@ -96,20 +95,25 @@ export default function SignUpForm() {
 
       const fileName = `${userId}/avatar.webp`;
 
-      // Upload to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("public-profile-images")
-        .upload(fileName, webpBlob, {
-          cacheControl: "3600",
-          upsert: true,
-          contentType: "image/webp",
-        });
+      // Upload to local server
+      const formData = new FormData();
+      formData.append("file", webpBlob, fileName);
 
-      if (uploadError) {
-        throw uploadError;
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/upload-profile-image`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Upload failed");
       }
 
-      return fileName; // Return the storage path
+      const data = await response.json();
+      return data.url; // Return the storage URL
     } catch (error: any) {
       console.error("Error uploading profile image:", error);
       toast({
@@ -127,45 +131,14 @@ export default function SignUpForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Create account first
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-        },
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("User creation failed");
-
-      // Upload profile image if provided
-      let avatarUrl = null;
-      if (profileImage) {
-        avatarUrl = await uploadProfileImage(authData.user.id);
-      }
-
-      // Update profile with image URL if uploaded
-      if (avatarUrl) {
-        const { error: profileError } = await supabase.from("profiles").upsert({
-          id: authData.user.id,
-          full_name: fullName,
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString(),
-        });
-
-        if (profileError) {
-          console.error("Profile update error:", profileError);
-        }
-      }
+      // Create account using useAuth hook
+      await signUp(email, password, fullName, profileImage || undefined);
 
       toast({
         title: "Account created successfully",
         description: profileImage
-          ? "Please check your email to verify your account. Profile image uploaded successfully!"
-          : "Please check your email to verify your account.",
+          ? "Account created successfully! Profile image uploaded. Please login."
+          : "Account created successfully! Please login.",
         duration: 5000,
       });
       navigate("/login");

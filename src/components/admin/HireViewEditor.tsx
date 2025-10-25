@@ -662,8 +662,8 @@ export default function HireViewEditor() {
     };
 
     try {
-      // Validate skill data before sending to database
-      validateSkillData({ ...newSkillData, id: "temp" });
+      // Validate skill data (without id - PostgreSQL will auto-generate)
+      validateSkillData(newSkillData);
 
       // Show loading state
       setIsSaving(true);
@@ -1216,8 +1216,8 @@ export default function HireViewEditor() {
         is_active: true,
       };
 
-      // Validate contact field data before sending to database
-      validateContactFieldData({ ...newField, id: "temp" });
+      // Validate contact field data (without id - PostgreSQL will auto-generate)
+      validateContactFieldData(newField);
 
       // Show loading state
       setIsSaving(true);
