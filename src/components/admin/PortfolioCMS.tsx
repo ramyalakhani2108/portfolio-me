@@ -74,11 +74,30 @@ interface Blog {
   updated_at: string;
 }
 
+interface HeroSettings {
+  id: string;
+  title: string;
+  title_highlight: string | null;
+  subtitle: string;
+  subtitle_highlight_1: string | null;
+  subtitle_highlight_2: string | null;
+  description: string | null;
+  hero_image_url: string | null;
+  cta_button_1_text: string | null;
+  cta_button_1_action: string | null;
+  cta_button_2_text: string | null;
+  cta_button_2_action: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 type FilterType = "all" | "active" | "inactive";
 
 export default function PortfolioCMS() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [heroSettings, setHeroSettings] = useState<HeroSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("projects");
@@ -89,6 +108,8 @@ export default function PortfolioCMS() {
   const [editFormData, setEditFormData] = useState<Partial<Project> | null>(null);
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [editBlogFormData, setEditBlogFormData] = useState<Partial<Blog> | null>(null);
+  const [isEditingHero, setIsEditingHero] = useState(false);
+  const [editHeroFormData, setEditHeroFormData] = useState<Partial<HeroSettings> | null>(null);
   const { toast } = useToast();
 
   const fetchData = useCallback(async () => {
@@ -96,7 +117,7 @@ export default function PortfolioCMS() {
       setIsLoading(true);
       setError(null);
 
-      const [projectsRes, blogsRes] =
+      const [projectsRes, blogsRes, heroRes] =
         await Promise.all([
           db
             .from("projects")
@@ -106,6 +127,10 @@ export default function PortfolioCMS() {
             .from("blogs")
             .select("*")
             .order("published_at", { ascending: false }),
+          db
+            .from("portfolio_hero_settings")
+            .select("*")
+            .single(),
         ]);
 
       const errors = [
@@ -132,6 +157,10 @@ export default function PortfolioCMS() {
           is_active: b.is_active ?? true,
         })),
       );
+      
+      if (heroRes.data) {
+        setHeroSettings(heroRes.data);
+      }
     } catch (error: any) {
       console.error("Error fetching portfolio data:", error);
       setError(error.message || "Failed to load portfolio data");
@@ -441,6 +470,53 @@ export default function PortfolioCMS() {
     }
   };
 
+  const startEditHero = () => {
+    if (heroSettings) {
+      setEditHeroFormData({ ...heroSettings });
+      setIsEditingHero(true);
+    }
+  };
+
+  const cancelEditHero = () => {
+    setIsEditingHero(false);
+    setEditHeroFormData(null);
+  };
+
+  const saveHeroChanges = async () => {
+    if (!editHeroFormData || !heroSettings) return;
+
+    try {
+      setIsSaving(true);
+
+      const { error } = await db
+        .from("portfolio_hero_settings")
+        .update(editHeroFormData)
+        .eq("id", heroSettings.id);
+
+      if (error) throw error;
+
+      setHeroSettings((prev) =>
+        prev ? { ...prev, ...editHeroFormData } : null,
+      );
+
+      toast({
+        title: "Hero Settings Saved",
+        description: "Hero section has been updated successfully.",
+      });
+
+      setIsEditingHero(false);
+      setEditHeroFormData(null);
+    } catch (error: any) {
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save hero settings.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const filterItems = <
     T extends {
       is_active?: boolean;
@@ -634,7 +710,7 @@ export default function PortfolioCMS() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="projects" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
             Projects ({stats.projectStats.active})
@@ -642,6 +718,10 @@ export default function PortfolioCMS() {
           <TabsTrigger value="blogs" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
             Blogs ({stats.blogStats.active})
+          </TabsTrigger>
+          <TabsTrigger value="hero" className="flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            Hero Settings
           </TabsTrigger>
         </TabsList>
 
@@ -1193,6 +1273,310 @@ export default function PortfolioCMS() {
                 <div className="text-center py-8 text-gray-500">
                   <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
                   <p>No blogs found matching your criteria</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Hero Settings Tab */}
+        <TabsContent value="hero" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Hero Section Settings</CardTitle>
+                {heroSettings && !isEditingHero && (
+                  <Button
+                    onClick={startEditHero}
+                    className="flex items-center gap-2"
+                    disabled={isSaving}
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit Hero
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {heroSettings && !isEditingHero && (
+                <div className="space-y-4">
+                  {/* Hero Preview */}
+                  <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+                    <CardContent className="p-6">
+                      <div className="text-center">
+                        <h2 className="text-4xl font-bold mb-2">
+                          {heroSettings.title}
+                          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-cyan-600 ml-2">
+                            {heroSettings.title_highlight}
+                          </span>
+                        </h2>
+                        <p className="text-xl text-gray-600 mb-4 leading-relaxed">
+                          {heroSettings.subtitle}
+                          <br />
+                          <span className="text-purple-600">{heroSettings.subtitle_highlight_1}</span>
+                          {' '}with{' '}
+                          <span className="text-cyan-600">{heroSettings.subtitle_highlight_2}</span>
+                        </p>
+                        <div className="flex gap-4 justify-center">
+                          <Badge variant="outline" className="px-3 py-1">
+                            {heroSettings.cta_button_1_text}
+                          </Badge>
+                          <Badge variant="outline" className="px-3 py-1">
+                            {heroSettings.cta_button_2_text}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-600">Title</Label>
+                      <div className="p-3 bg-gray-100 rounded border text-sm">
+                        {heroSettings.title}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-600">Title Highlight</Label>
+                      <div className="p-3 bg-gray-100 rounded border text-sm">
+                        {heroSettings.title_highlight}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-600">Subtitle</Label>
+                    <div className="p-3 bg-gray-100 rounded border text-sm">
+                      {heroSettings.subtitle}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-600">Highlight 1 (e.g., innovation)</Label>
+                      <div className="p-3 bg-gray-100 rounded border text-sm">
+                        {heroSettings.subtitle_highlight_1}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-600">Highlight 2 (e.g., functionality)</Label>
+                      <div className="p-3 bg-gray-100 rounded border text-sm">
+                        {heroSettings.subtitle_highlight_2}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-600">Status</Label>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(heroSettings.is_active)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {heroSettings && isEditingHero && editHeroFormData && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Main Title *</Label>
+                      <Input
+                        value={editHeroFormData.title || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            title: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., Creative"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Title Highlight (Animated) *</Label>
+                      <Input
+                        value={editHeroFormData.title_highlight || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            title_highlight: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., Developer"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Subtitle *</Label>
+                    <Textarea
+                      value={editHeroFormData.subtitle || ""}
+                      onChange={(e) =>
+                        setEditHeroFormData({
+                          ...editHeroFormData,
+                          subtitle: e.target.value,
+                        })
+                      }
+                      placeholder="e.g., Crafting digital experiences that blend"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Subtitle Highlight 1 (Colored) *</Label>
+                      <Input
+                        value={editHeroFormData.subtitle_highlight_1 || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            subtitle_highlight_1: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., innovation"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Subtitle Highlight 2 (Colored) *</Label>
+                      <Input
+                        value={editHeroFormData.subtitle_highlight_2 || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            subtitle_highlight_2: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., functionality"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      value={editHeroFormData.description || ""}
+                      onChange={(e) =>
+                        setEditHeroFormData({
+                          ...editHeroFormData,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Optional description/tagline"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Hero Image URL</Label>
+                    <Input
+                      type="url"
+                      value={editHeroFormData.hero_image_url || ""}
+                      onChange={(e) =>
+                        setEditHeroFormData({
+                          ...editHeroFormData,
+                          hero_image_url: e.target.value,
+                        })
+                      }
+                      placeholder="https://..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>First CTA Button Text</Label>
+                      <Input
+                        value={editHeroFormData.cta_button_1_text || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            cta_button_1_text: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., Explore My Work"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>First CTA Button Action</Label>
+                      <Input
+                        value={editHeroFormData.cta_button_1_action || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            cta_button_1_action: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., projects"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Second CTA Button Text</Label>
+                      <Input
+                        value={editHeroFormData.cta_button_2_text || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            cta_button_2_text: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., Let's Connect"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Second CTA Button Action</Label>
+                      <Input
+                        value={editHeroFormData.cta_button_2_action || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            cta_button_2_action: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., contact"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={editHeroFormData.is_active || false}
+                        onCheckedChange={(checked) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            is_active: checked,
+                          })
+                        }
+                      />
+                      <span className="text-sm text-gray-600">Active</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={cancelEditHero}
+                        variant="outline"
+                        disabled={isSaving}
+                      >
+                        Cancel
+                      </Button>
+                      <Button onClick={saveHeroChanges} disabled={isSaving}>
+                        {isSaving ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Save Changes
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!heroSettings && (
+                <div className="text-center py-8 text-gray-500">
+                  <Palette className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No hero settings found. Please contact administrator.</p>
                 </div>
               )}
             </CardContent>
