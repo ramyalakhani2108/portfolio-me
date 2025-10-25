@@ -37,6 +37,7 @@ import {
   Palette,
   Settings,
   ExternalLink,
+  BookOpen,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { useToast } from "@/components/ui/use-toast";
@@ -59,51 +60,44 @@ interface Project {
   updated_at: string;
 }
 
-interface Skill {
+interface Blog {
   id: string;
-  name: string;
-  category: string;
-  proficiency: number | null;
-  icon_url: string | null;
-  is_active?: boolean;
-  created_at: string;
-}
-
-interface Experience {
-  id: string;
-  company: string;
-  position: string;
-  description: string | null;
-  start_date: string;
-  end_date: string | null;
-  is_current: boolean | null;
-  location: string | null;
-  company_logo: string | null;
+  title: string;
+  excerpt: string | null;
+  content: string;
+  featured_image: string | null;
+  tags: string[] | null;
+  published_at: string;
   order_index: number | null;
   is_active?: boolean;
   created_at: string;
+  updated_at: string;
 }
 
-interface Testimonial {
+interface HeroSettings {
   id: string;
-  name: string;
-  position: string | null;
-  company: string | null;
-  content: string;
-  avatar_url: string | null;
-  rating: number | null;
-  featured: boolean | null;
-  is_active?: boolean;
+  title: string;
+  title_highlight: string | null;
+  subtitle: string;
+  subtitle_highlight_1: string | null;
+  subtitle_highlight_2: string | null;
+  description: string | null;
+  hero_image_url: string | null;
+  cta_button_1_text: string | null;
+  cta_button_1_action: string | null;
+  cta_button_2_text: string | null;
+  cta_button_2_action: string | null;
+  is_active: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 type FilterType = "all" | "active" | "inactive";
 
 export default function PortfolioCMS() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [experiences, setExperiences] = useState<Experience[]>([]);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [heroSettings, setHeroSettings] = useState<HeroSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("projects");
@@ -112,6 +106,10 @@ export default function PortfolioCMS() {
   const [error, setError] = useState<string | null>(null);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Project> | null>(null);
+  const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
+  const [editBlogFormData, setEditBlogFormData] = useState<Partial<Blog> | null>(null);
+  const [isEditingHero, setIsEditingHero] = useState(false);
+  const [editHeroFormData, setEditHeroFormData] = useState<Partial<HeroSettings> | null>(null);
   const { toast } = useToast();
 
   const fetchData = useCallback(async () => {
@@ -119,31 +117,25 @@ export default function PortfolioCMS() {
       setIsLoading(true);
       setError(null);
 
-      const [projectsRes, skillsRes, experiencesRes, testimonialsRes] =
+      const [projectsRes, blogsRes, heroRes] =
         await Promise.all([
           db
             .from("projects")
             .select("*")
             .order("order_index", { ascending: true }),
           db
-            .from("skills")
+            .from("blogs")
             .select("*")
-            .order("name", { ascending: true }),
+            .order("published_at", { ascending: false }),
           db
-            .from("experiences")
+            .from("portfolio_hero_settings")
             .select("*")
-            .order("order_index", { ascending: true }),
-          db
-            .from("testimonials")
-            .select("*")
-            .order("created_at", { ascending: false }),
+            .single(),
         ]);
 
       const errors = [
         projectsRes.error,
-        skillsRes.error,
-        experiencesRes.error,
-        testimonialsRes.error,
+        blogsRes.error,
       ].filter(Boolean);
 
       if (errors.length > 0) {
@@ -159,24 +151,16 @@ export default function PortfolioCMS() {
           is_active: p.is_active ?? true,
         })),
       );
-      setSkills(
-        (skillsRes.data || []).map((s) => ({
-          ...s,
-          is_active: s.is_active ?? true,
+      setBlogs(
+        (blogsRes.data || []).map((b) => ({
+          ...b,
+          is_active: b.is_active ?? true,
         })),
       );
-      setExperiences(
-        (experiencesRes.data || []).map((e) => ({
-          ...e,
-          is_active: e.is_active ?? true,
-        })),
-      );
-      setTestimonials(
-        (testimonialsRes.data || []).map((t) => ({
-          ...t,
-          is_active: t.is_active ?? true,
-        })),
-      );
+      
+      if (heroRes.data) {
+        setHeroSettings(heroRes.data);
+      }
     } catch (error: any) {
       console.error("Error fetching portfolio data:", error);
       setError(error.message || "Failed to load portfolio data");
@@ -207,7 +191,7 @@ export default function PortfolioCMS() {
 
   useEffect(() => {
     // Ensure all tables have is_active column
-    const tables = ["projects", "skills", "experiences", "testimonials"];
+    const tables = ["projects", "skills", "experiences", "testimonials", "blogs"];
     tables.forEach((table) => ensureActiveColumn(table));
   }, []);
 
@@ -234,94 +218,6 @@ export default function PortfolioCMS() {
       toast({
         title: "Update Failed",
         description: error.message || "Failed to update project status.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateSkillStatus = async (skillId: string, isActive: boolean) => {
-    try {
-      const { error } = await db
-        .from("skills")
-        .update({ is_active: isActive })
-        .eq("id", skillId);
-
-      if (error) throw error;
-
-      setSkills((prev) =>
-        prev.map((s) =>
-          s.id === skillId ? { ...s, is_active: isActive } : s,
-        ),
-      );
-
-      toast({
-        title: "Skill Updated",
-        description: `Skill ${isActive ? "activated" : "deactivated"} successfully.`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update skill status.",
-        variant: "destructive",
-      });
-    }
-  };  const updateExperienceStatus = async (
-    experienceId: string,
-    isActive: boolean,
-  ) => {
-    try {
-      const { error } = await db
-        .from("experiences")
-        .update({ is_active: isActive })
-        .eq("id", experienceId);
-
-      if (error) throw error;
-
-      setExperiences((prev) =>
-        prev.map((e) =>
-          e.id === experienceId ? { ...e, is_active: isActive } : e,
-        ),
-      );
-
-      toast({
-        title: "Experience Updated",
-        description: `Experience ${isActive ? "activated" : "deactivated"} successfully.`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update experience status.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateTestimonialStatus = async (
-    testimonialId: string,
-    isActive: boolean,
-  ) => {
-    try {
-      const { error } = await db
-        .from("testimonials")
-        .update({ is_active: isActive })
-        .eq("id", testimonialId);
-
-      if (error) throw error;
-
-      setTestimonials((prev) =>
-        prev.map((t) =>
-          t.id === testimonialId ? { ...t, is_active: isActive } : t,
-        ),
-      );
-
-      toast({
-        title: "Testimonial Updated",
-        description: `Testimonial ${isActive ? "activated" : "deactivated"} successfully.`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update testimonial status.",
         variant: "destructive",
       });
     }
@@ -438,6 +334,189 @@ export default function PortfolioCMS() {
     }
   };
 
+  const updateBlogStatus = async (blogId: string, isActive: boolean) => {
+    try {
+      const { error } = await db
+        .from("blogs")
+        .update({ is_active: isActive })
+        .eq("id", blogId);
+
+      if (error) throw error;
+
+      setBlogs((prev) =>
+        prev.map((b) =>
+          b.id === blogId ? { ...b, is_active: isActive } : b,
+        ),
+      );
+
+      toast({
+        title: "Blog Updated",
+        description: `Blog ${isActive ? "activated" : "deactivated"} successfully.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update blog status.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const addBlog = async () => {
+    try {
+      setIsSaving(true);
+      const newBlog = {
+        title: "",
+        excerpt: "",
+        content: "",
+        featured_image: "",
+        tags: [],
+        published_at: new Date().toISOString(),
+        order_index: blogs.length,
+        is_active: true,
+      };
+
+      const { data, error } = await db
+        .from("blogs")
+        .insert([newBlog])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setBlogs((prev) => [...prev, data]);
+      toast({
+        title: "Blog Added",
+        description: "New blank blog post has been created. Please fill in the details.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Add Failed",
+        description: error.message || "Failed to add new blog.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const deleteBlog = async (blogId: string) => {
+    try {
+      const { error } = await db
+        .from("blogs")
+        .delete()
+        .eq("id", blogId);
+
+      if (error) throw error;
+
+      setBlogs((prev) => prev.filter((b) => b.id !== blogId));
+      toast({
+        title: "Blog Deleted",
+        description: "Blog post has been removed successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Failed to delete blog.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const startEditBlog = (blog: Blog) => {
+    setEditingBlogId(blog.id);
+    setEditBlogFormData({ ...blog });
+  };
+
+  const cancelEditBlog = () => {
+    setEditingBlogId(null);
+    setEditBlogFormData(null);
+  };
+
+  const saveBlogChanges = async () => {
+    if (!editBlogFormData || !editingBlogId) return;
+
+    try {
+      setIsSaving(true);
+
+      const { error } = await db
+        .from("blogs")
+        .update(editBlogFormData)
+        .eq("id", editingBlogId);
+
+      if (error) throw error;
+
+      setBlogs((prev) =>
+        prev.map((b) =>
+          b.id === editingBlogId ? { ...b, ...editBlogFormData } : b,
+        ),
+      );
+
+      toast({
+        title: "Blog Saved",
+        description: "Blog post has been updated successfully.",
+      });
+
+      setEditingBlogId(null);
+      setEditBlogFormData(null);
+    } catch (error: any) {
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save blog changes.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const startEditHero = () => {
+    if (heroSettings) {
+      setEditHeroFormData({ ...heroSettings });
+      setIsEditingHero(true);
+    }
+  };
+
+  const cancelEditHero = () => {
+    setIsEditingHero(false);
+    setEditHeroFormData(null);
+  };
+
+  const saveHeroChanges = async () => {
+    if (!editHeroFormData || !heroSettings) return;
+
+    try {
+      setIsSaving(true);
+
+      const { error } = await db
+        .from("portfolio_hero_settings")
+        .update(editHeroFormData)
+        .eq("id", heroSettings.id);
+
+      if (error) throw error;
+
+      setHeroSettings((prev) =>
+        prev ? { ...prev, ...editHeroFormData } : null,
+      );
+
+      toast({
+        title: "Hero Settings Saved",
+        description: "Hero section has been updated successfully.",
+      });
+
+      setIsEditingHero(false);
+      setEditHeroFormData(null);
+    } catch (error: any) {
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save hero settings.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const filterItems = <
     T extends {
       is_active?: boolean;
@@ -503,25 +582,13 @@ export default function PortfolioCMS() {
       inactive: projects.filter((p) => !p.is_active).length,
     };
 
-    const skillStats = {
-      total: skills.length,
-      active: skills.filter((s) => s.is_active).length,
-      inactive: skills.filter((s) => !s.is_active).length,
+    const blogStats = {
+      total: blogs.length,
+      active: blogs.filter((b) => b.is_active).length,
+      inactive: blogs.filter((b) => !b.is_active).length,
     };
 
-    const experienceStats = {
-      total: experiences.length,
-      active: experiences.filter((e) => e.is_active).length,
-      inactive: experiences.filter((e) => !e.is_active).length,
-    };
-
-    const testimonialStats = {
-      total: testimonials.length,
-      active: testimonials.filter((t) => t.is_active).length,
-      inactive: testimonials.filter((t) => !t.is_active).length,
-    };
-
-    return { projectStats, skillStats, experienceStats, testimonialStats };
+    return { projectStats, blogStats };
   };
 
   if (isLoading) {
@@ -599,55 +666,6 @@ export default function PortfolioCMS() {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-700">Skills</p>
-                <p className="text-2xl font-bold text-green-900">
-                  {stats.skillStats.active}/{stats.skillStats.total}
-                </p>
-                <p className="text-xs text-green-600">Active/Total</p>
-              </div>
-              <Star className="w-8 h-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-purple-700">
-                  Experience
-                </p>
-                <p className="text-2xl font-bold text-purple-900">
-                  {stats.experienceStats.active}/{stats.experienceStats.total}
-                </p>
-                <p className="text-xs text-purple-600">Active/Total</p>
-              </div>
-              <Building className="w-8 h-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-orange-700">
-                  Testimonials
-                </p>
-                <p className="text-2xl font-bold text-orange-900">
-                  {stats.testimonialStats.active}/{stats.testimonialStats.total}
-                </p>
-                <p className="text-xs text-orange-600">Active/Total</p>
-              </div>
-              <Users className="w-8 h-8 text-orange-500" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Filters */}
@@ -692,22 +710,18 @@ export default function PortfolioCMS() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="projects" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
             Projects ({stats.projectStats.active})
           </TabsTrigger>
-          <TabsTrigger value="skills" className="flex items-center gap-2">
-            <Star className="w-4 h-4" />
-            Skills ({stats.skillStats.active})
+          <TabsTrigger value="blogs" className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4" />
+            Blogs ({stats.blogStats.active})
           </TabsTrigger>
-          <TabsTrigger value="experience" className="flex items-center gap-2">
-            <Building className="w-4 h-4" />
-            Experience ({stats.experienceStats.active})
-          </TabsTrigger>
-          <TabsTrigger value="testimonials" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Testimonials ({stats.testimonialStats.active})
+          <TabsTrigger value="hero" className="flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            Hero Settings
           </TabsTrigger>
         </TabsList>
 
@@ -1017,184 +1031,552 @@ export default function PortfolioCMS() {
           </Card>
         </TabsContent>
 
-        {/* Skills Tab */}
-        <TabsContent value="skills" className="space-y-4">
+        {/* Blogs Tab */}
+        <TabsContent value="blogs" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Skills Management</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Blogs Management</CardTitle>
+                <Button
+                  onClick={addBlog}
+                  className="flex items-center gap-2"
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
+                  Add Blog
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <AnimatePresence>
-                {filterItems(skills).map((skill) => (
+                {filterItems(blogs).map((blog) => (
                   <motion.div
-                    key={skill.id}
+                    key={blog.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="p-4 border rounded-lg"
+                    className="border rounded-lg overflow-hidden"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <h4 className="font-semibold">{skill.name}</h4>
-                        {getStatusBadge(skill.is_active)}
-                        <Badge variant="outline">{skill.category}</Badge>
-                        {skill.proficiency && (
-                          <Badge variant="secondary">
-                            {skill.proficiency}%
-                          </Badge>
-                        )}
+                    {/* Blog Header */}
+                    <div className="p-4 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => editingBlogId === blog.id ? cancelEditBlog() : startEditBlog(blog)}
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <BookOpen className="w-4 h-4 text-gray-400" />
+                        <div>
+                          <h4 className="font-semibold">{blog.title || "Untitled Blog"}</h4>
+                          <p className="text-sm text-gray-500">{blog.excerpt || "No excerpt"}</p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Switch
-                          checked={skill.is_active || false}
-                          onCheckedChange={(checked) =>
-                            updateSkillStatus(skill.id, checked)
-                          }
-                        />
-                        <span className="text-sm text-gray-500">Active</span>
+                        {getStatusBadge(blog.is_active)}
                       </div>
                     </div>
+
+                    {/* Blog Edit Form */}
+                    {editingBlogId === blog.id && editBlogFormData && (
+                      <div className="p-6 bg-white border-t space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Blog Title *</Label>
+                            <Input
+                              value={editBlogFormData.title || ""}
+                              onChange={(e) =>
+                                setEditBlogFormData({
+                                  ...editBlogFormData,
+                                  title: e.target.value,
+                                })
+                              }
+                              placeholder="Enter blog title"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Published Date</Label>
+                            <Input
+                              type="datetime-local"
+                              value={
+                                editBlogFormData.published_at
+                                  ? new Date(editBlogFormData.published_at).toISOString().slice(0, 16)
+                                  : ""
+                              }
+                              onChange={(e) =>
+                                setEditBlogFormData({
+                                  ...editBlogFormData,
+                                  published_at: new Date(e.target.value).toISOString(),
+                                })
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Excerpt *</Label>
+                          <Textarea
+                            value={editBlogFormData.excerpt || ""}
+                            onChange={(e) =>
+                              setEditBlogFormData({
+                                ...editBlogFormData,
+                                excerpt: e.target.value,
+                              })
+                            }
+                            placeholder="Brief excerpt (shown in blog lists)"
+                            rows={2}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Content *</Label>
+                          <Textarea
+                            value={editBlogFormData.content || ""}
+                            onChange={(e) =>
+                              setEditBlogFormData({
+                                ...editBlogFormData,
+                                content: e.target.value,
+                              })
+                            }
+                            placeholder="Full blog content (supports markdown)"
+                            rows={8}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Featured Image URL</Label>
+                          <Input
+                            value={editBlogFormData.featured_image || ""}
+                            onChange={(e) =>
+                              setEditBlogFormData({
+                                ...editBlogFormData,
+                                featured_image: e.target.value,
+                              })
+                            }
+                            placeholder="https://..."
+                            type="url"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Tags (comma-separated)</Label>
+                          <Input
+                            value={
+                              Array.isArray(editBlogFormData.tags)
+                                ? editBlogFormData.tags.join(", ")
+                                : ""
+                            }
+                            onChange={(e) =>
+                              setEditBlogFormData({
+                                ...editBlogFormData,
+                                tags: e.target.value
+                                  .split(",")
+                                  .map((t) => t.trim())
+                                  .filter((t) => t),
+                              })
+                            }
+                            placeholder="React, Web Development, etc."
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between pt-4 border-t">
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={editBlogFormData.is_active || false}
+                              onCheckedChange={(checked) =>
+                                setEditBlogFormData({
+                                  ...editBlogFormData,
+                                  is_active: checked,
+                                })
+                              }
+                            />
+                            <span className="text-sm text-gray-600">Active</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              onClick={cancelEditBlog}
+                              variant="outline"
+                              disabled={isSaving}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={saveBlogChanges}
+                              disabled={isSaving}
+                            >
+                              {isSaving ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <Save className="w-4 h-4 mr-2" />
+                              )}
+                              Save Changes
+                            </Button>
+                            <Button
+                              onClick={() => deleteBlog(blog.id)}
+                              variant="destructive"
+                              size="sm"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Blog Summary (when not editing) */}
+                    {editingBlogId !== blog.id && (
+                      <div className="p-4 bg-white space-y-3 border-t">
+                        <div className="flex flex-wrap gap-1">
+                          {editBlogFormData?.tags && editBlogFormData.tags.length > 0 && (
+                            editBlogFormData.tags.map((tag, index) => (
+                              <Badge
+                                key={index}
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {tag}
+                              </Badge>
+                            ))
+                          )}
+                          {blog.tags && blog.tags.length > 0 && !editBlogFormData?.tags && (
+                            blog.tags.map((tag, index) => (
+                              <Badge
+                                key={index}
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {tag}
+                              </Badge>
+                            ))
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <span>
+                            Published: {new Date(blog.published_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 pt-2 border-t">
+                          <Switch
+                            checked={blog.is_active || false}
+                            onCheckedChange={(checked) =>
+                              updateBlogStatus(blog.id, checked)
+                            }
+                          />
+                          <span className="text-sm text-gray-500">Active</span>
+                        </div>
+                      </div>
+                    )}
                   </motion.div>
                 ))}
               </AnimatePresence>
-              {filterItems(skills).length === 0 && (
+              {filterItems(blogs).length === 0 && (
                 <div className="text-center py-8 text-gray-500">
-                  <Star className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No skills found matching your criteria</p>
+                  <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No blogs found matching your criteria</p>
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Experience Tab */}
-        <TabsContent value="experience" className="space-y-4">
+        {/* Hero Settings Tab */}
+        <TabsContent value="hero" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Experience Management</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Hero Section Settings</CardTitle>
+                {heroSettings && !isEditingHero && (
+                  <Button
+                    onClick={startEditHero}
+                    className="flex items-center gap-2"
+                    disabled={isSaving}
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit Hero
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <AnimatePresence>
-                {filterItems(experiences).map((experience) => (
-                  <motion.div
-                    key={experience.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="p-4 border rounded-lg space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <h4 className="font-semibold">
-                          {experience.company} - {experience.position}
-                        </h4>
-                        {getStatusBadge(experience.is_active)}
-                        {experience.is_current && (
-                          <Badge
-                            variant="default"
-                            className="bg-blue-100 text-blue-800"
-                          >
-                            Current
+              {heroSettings && !isEditingHero && (
+                <div className="space-y-4">
+                  {/* Hero Preview */}
+                  <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+                    <CardContent className="p-6">
+                      <div className="text-center">
+                        <h2 className="text-4xl font-bold mb-2">
+                          {heroSettings.title}
+                          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-cyan-600 ml-2">
+                            {heroSettings.title_highlight}
+                          </span>
+                        </h2>
+                        <p className="text-xl text-gray-600 mb-4 leading-relaxed">
+                          {heroSettings.subtitle}
+                          <br />
+                          <span className="text-purple-600">{heroSettings.subtitle_highlight_1}</span>
+                          {' '}with{' '}
+                          <span className="text-cyan-600">{heroSettings.subtitle_highlight_2}</span>
+                        </p>
+                        <div className="flex gap-4 justify-center">
+                          <Badge variant="outline" className="px-3 py-1">
+                            {heroSettings.cta_button_1_text}
                           </Badge>
-                        )}
+                          <Badge variant="outline" className="px-3 py-1">
+                            {heroSettings.cta_button_2_text}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={experience.is_active || false}
-                          onCheckedChange={(checked) =>
-                            updateExperienceStatus(experience.id, checked)
-                          }
-                        />
-                        <span className="text-sm text-gray-500">Active</span>
+                    </CardContent>
+                  </Card>
+
+                  {/* Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-600">Title</Label>
+                      <div className="p-3 bg-gray-100 rounded border text-sm">
+                        {heroSettings.title}
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600">
-                      {experience.description}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span>
-                        {experience.start_date} -{" "}
-                        {experience.end_date || "Present"}
-                      </span>
-                      {experience.location && (
-                        <span>{experience.location}</span>
-                      )}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-600">Title Highlight</Label>
+                      <div className="p-3 bg-gray-100 rounded border text-sm">
+                        {heroSettings.title_highlight}
+                      </div>
                     </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-              {filterItems(experiences).length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <Building className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No experience entries found matching your criteria</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-600">Subtitle</Label>
+                    <div className="p-3 bg-gray-100 rounded border text-sm">
+                      {heroSettings.subtitle}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-600">Highlight 1 (e.g., innovation)</Label>
+                      <div className="p-3 bg-gray-100 rounded border text-sm">
+                        {heroSettings.subtitle_highlight_1}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-600">Highlight 2 (e.g., functionality)</Label>
+                      <div className="p-3 bg-gray-100 rounded border text-sm">
+                        {heroSettings.subtitle_highlight_2}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-600">Status</Label>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(heroSettings.is_active)}
+                    </div>
+                  </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        {/* Testimonials Tab */}
-        <TabsContent value="testimonials" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Testimonials Management</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <AnimatePresence>
-                {filterItems(testimonials).map((testimonial) => (
-                  <motion.div
-                    key={testimonial.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="p-4 border rounded-lg space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <h4 className="font-semibold">{testimonial.name}</h4>
-                        {getStatusBadge(testimonial.is_active)}
-                        {testimonial.featured && (
-                          <Badge
-                            variant="outline"
-                            className="bg-yellow-50 text-yellow-700 border-yellow-200"
-                          >
-                            <Star className="w-3 h-3 mr-1" />
-                            Featured
-                          </Badge>
-                        )}
-                        {testimonial.rating && (
-                          <Badge variant="secondary">
-                            {testimonial.rating}/5 ⭐
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={testimonial.is_active || false}
-                          onCheckedChange={(checked) =>
-                            updateTestimonialStatus(testimonial.id, checked)
-                          }
-                        />
-                        <span className="text-sm text-gray-500">Active</span>
-                      </div>
+              {heroSettings && isEditingHero && editHeroFormData && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Main Title *</Label>
+                      <Input
+                        value={editHeroFormData.title || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            title: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., Creative"
+                      />
                     </div>
-                    <p className="text-sm text-gray-600 italic">
-                      "{testimonial.content}"
-                    </p>
-                    <div className="text-xs text-gray-500">
-                      {testimonial.position && testimonial.company && (
-                        <span>
-                          {testimonial.position} at {testimonial.company}
-                        </span>
-                      )}
+                    <div className="space-y-2">
+                      <Label>Title Highlight (Animated) *</Label>
+                      <Input
+                        value={editHeroFormData.title_highlight || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            title_highlight: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., Developer"
+                      />
                     </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-              {filterItems(testimonials).length === 0 && (
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Subtitle *</Label>
+                    <Textarea
+                      value={editHeroFormData.subtitle || ""}
+                      onChange={(e) =>
+                        setEditHeroFormData({
+                          ...editHeroFormData,
+                          subtitle: e.target.value,
+                        })
+                      }
+                      placeholder="e.g., Crafting digital experiences that blend"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Subtitle Highlight 1 (Colored) *</Label>
+                      <Input
+                        value={editHeroFormData.subtitle_highlight_1 || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            subtitle_highlight_1: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., innovation"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Subtitle Highlight 2 (Colored) *</Label>
+                      <Input
+                        value={editHeroFormData.subtitle_highlight_2 || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            subtitle_highlight_2: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., functionality"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      value={editHeroFormData.description || ""}
+                      onChange={(e) =>
+                        setEditHeroFormData({
+                          ...editHeroFormData,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Optional description/tagline"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Hero Image URL</Label>
+                    <Input
+                      type="url"
+                      value={editHeroFormData.hero_image_url || ""}
+                      onChange={(e) =>
+                        setEditHeroFormData({
+                          ...editHeroFormData,
+                          hero_image_url: e.target.value,
+                        })
+                      }
+                      placeholder="https://..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>First CTA Button Text</Label>
+                      <Input
+                        value={editHeroFormData.cta_button_1_text || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            cta_button_1_text: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., Explore My Work"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>First CTA Button Action</Label>
+                      <Input
+                        value={editHeroFormData.cta_button_1_action || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            cta_button_1_action: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., projects"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Second CTA Button Text</Label>
+                      <Input
+                        value={editHeroFormData.cta_button_2_text || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            cta_button_2_text: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., Let's Connect"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Second CTA Button Action</Label>
+                      <Input
+                        value={editHeroFormData.cta_button_2_action || ""}
+                        onChange={(e) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            cta_button_2_action: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., contact"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={editHeroFormData.is_active || false}
+                        onCheckedChange={(checked) =>
+                          setEditHeroFormData({
+                            ...editHeroFormData,
+                            is_active: checked,
+                          })
+                        }
+                      />
+                      <span className="text-sm text-gray-600">Active</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={cancelEditHero}
+                        variant="outline"
+                        disabled={isSaving}
+                      >
+                        Cancel
+                      </Button>
+                      <Button onClick={saveHeroChanges} disabled={isSaving}>
+                        {isSaving ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Save Changes
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!heroSettings && (
                 <div className="text-center py-8 text-gray-500">
-                  <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No testimonials found matching your criteria</p>
+                  <Palette className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No hero settings found. Please contact administrator.</p>
                 </div>
               )}
             </CardContent>

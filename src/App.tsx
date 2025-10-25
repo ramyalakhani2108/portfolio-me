@@ -7,6 +7,7 @@ import Dashboard from "./components/pages/dashboard";
 import Success from "./components/pages/success";
 import Home from "./components/pages/home";
 import AdminPage from "./components/pages/admin";
+import NotFound from "./components/pages/not-found";
 import { AuthProvider, useAuth } from "../supabase/auth";
 import { Toaster } from "./components/ui/toaster";
 import { LoadingScreen, LoadingSpinner } from "./components/ui/loading-spinner";
@@ -42,9 +43,9 @@ function AppRoutes() {
           }
         />
         <Route path="/success" element={<Success />} />
-        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/Art1204" element={<AdminPage />} />
         {/* Catch-all route for 404 */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       {useRoutes(routes)}
     </>

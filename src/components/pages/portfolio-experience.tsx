@@ -64,6 +64,24 @@ interface BlogPost {
   featured_image: string;
 }
 
+interface HeroSettings {
+  id: string;
+  title: string;
+  title_highlight: string | null;
+  subtitle: string;
+  subtitle_highlight_1: string | null;
+  subtitle_highlight_2: string | null;
+  description: string | null;
+  hero_image_url: string | null;
+  cta_button_1_text: string | null;
+  cta_button_1_action: string | null;
+  cta_button_2_text: string | null;
+  cta_button_2_action: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 interface PortfolioExperienceProps {
   onBackToLanding?: () => void;
 }
@@ -77,41 +95,8 @@ export default function PortfolioExperience({
   });
   const [skills, setSkills] = useState<Skill[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [blogPosts] = useState<BlogPost[]>([
-    {
-      id: "1",
-      title: "Building Scalable React Applications",
-      excerpt:
-        "Best practices and patterns for creating maintainable React apps that scale with your team.",
-      content: "",
-      published_at: "2024-01-15",
-      tags: ["React", "Architecture", "Best Practices"],
-      featured_image:
-        "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&q=80",
-    },
-    {
-      id: "2",
-      title: "The Future of Web Development",
-      excerpt:
-        "Exploring emerging technologies and trends that will shape the next decade of web development.",
-      content: "",
-      published_at: "2024-01-10",
-      tags: ["Web Development", "Future Tech", "Trends"],
-      featured_image:
-        "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80",
-    },
-    {
-      id: "3",
-      title: "Mastering CSS Grid and Flexbox",
-      excerpt:
-        "A comprehensive guide to modern CSS layout techniques with practical examples.",
-      content: "",
-      published_at: "2024-01-05",
-      tags: ["CSS", "Layout", "Tutorial"],
-      featured_image:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80",
-    },
-  ]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [heroSettings, setHeroSettings] = useState<HeroSettings | null>(null);
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -199,7 +184,7 @@ export default function PortfolioExperience({
 
   const fetchData = async () => {
     try {
-      const [skillsRes, projectsRes] = await Promise.all([
+      const [skillsRes, projectsRes, blogsRes, heroRes] = await Promise.all([
         db
           .from("skills")
           .select("*")
@@ -208,10 +193,26 @@ export default function PortfolioExperience({
           .from("projects")
           .select("*")
           .order("order_index", { ascending: true }),
+        db
+          .from("blogs")
+          .select("*")
+          .eq("is_active", true)
+          .order("published_at", { ascending: false })
+          .limit(3),
+        db
+          .from("portfolio_hero_settings")
+          .select("*")
+          .single(),
       ]);
 
       if (skillsRes.data) setSkills(skillsRes.data);
       if (projectsRes.data) setProjects(projectsRes.data);
+      if (blogsRes.data && blogsRes.data.length > 0) {
+        setBlogPosts(blogsRes.data);
+      }
+      if (heroRes.data) {
+        setHeroSettings(heroRes.data);
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -423,7 +424,7 @@ export default function PortfolioExperience({
             variants={itemVariants}
             className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
           >
-            Creative
+            {heroSettings?.title || "Creative"}
             <motion.span
               className={`block bg-gradient-to-r bg-clip-text text-transparent ${
                 isDarkMode
@@ -439,7 +440,7 @@ export default function PortfolioExperience({
                 ease: "linear",
               }}
             >
-              Developer
+              {heroSettings?.title_highlight || "Developer"}
             </motion.span>
           </motion.h1>
 
@@ -449,16 +450,16 @@ export default function PortfolioExperience({
               isDarkMode ? "text-gray-300" : "text-gray-600"
             }`}
           >
-            Crafting digital experiences that blend
+            {heroSettings?.subtitle || "Crafting digital experiences that blend"}
             <br className="hidden md:block" />
             <span
               className={isDarkMode ? "text-purple-400" : "text-purple-600"}
             >
-              innovation
+              {heroSettings?.subtitle_highlight_1 || "innovation"}
             </span>{" "}
             with{" "}
             <span className={isDarkMode ? "text-cyan-400" : "text-cyan-600"}>
-              functionality
+              {heroSettings?.subtitle_highlight_2 || "functionality"}
             </span>
           </motion.p>
 
@@ -467,7 +468,7 @@ export default function PortfolioExperience({
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
             <Button
-              onClick={() => scrollToSection("projects")}
+              onClick={() => scrollToSection(heroSettings?.cta_button_1_action || "projects")}
               size="lg"
               className={`bg-gradient-to-r text-white shadow-lg hover:shadow-xl transition-all duration-300 ${
                 isDarkMode
@@ -476,10 +477,10 @@ export default function PortfolioExperience({
               }`}
             >
               <Rocket className="w-5 h-5 mr-2" />
-              Explore My Work
+              {heroSettings?.cta_button_1_text || "Explore My Work"}
             </Button>
             <Button
-              onClick={() => scrollToSection("contact")}
+              onClick={() => scrollToSection(heroSettings?.cta_button_2_action || "contact")}
               variant="outline"
               size="lg"
               className={`border-2 transition-all duration-300 ${
@@ -489,7 +490,7 @@ export default function PortfolioExperience({
               }`}
             >
               <Heart className="w-5 h-5 mr-2" />
-              Let's Connect
+              {heroSettings?.cta_button_2_text || "Let's Connect"}
             </Button>
           </motion.div>
         </motion.div>
