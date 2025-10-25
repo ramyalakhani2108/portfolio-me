@@ -1102,7 +1102,6 @@ export default function DynamicHireView({
               className={`text-sm space-y-1 ${isDarkMode ? "text-gray-300" : "text-blue-700"}`}
             >
               <li>• <strong>Standard Resume:</strong> Pre-built professional resume</li>
-              <li>• <strong>Custom Resume:</strong> Generate based on portfolio data</li>
               <li>• <strong>Enhanced AI Resume:</strong> AI-powered with LinkedIn integration</li>
               <li>• LinkedIn profile integration (if URL provided)</li>
               <li>• Professional formatting and styling</li>
