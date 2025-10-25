@@ -17,7 +17,7 @@ import {
   useTransform,
   useSpring,
 } from "framer-motion";
-import { supabase } from "../../../supabase/supabase";
+import { db } from "@/lib/db";
 import DynamicHireView from "../hire-view/DynamicHireView";
 import PortfolioExperience from "./portfolio-experience";
 import { useToast } from "@/components/ui/use-toast";
@@ -248,7 +248,7 @@ export default function LandingPage() {
 
   const trackAnalytics = async (data: AnalyticsData) => {
     try {
-      await supabase.from("visitor_analytics").insert({
+      await db.from("visitor_analytics").insert({
         session_id: data.session_id,
         user_flow: data.user_flow,
         page_path: data.page_path,

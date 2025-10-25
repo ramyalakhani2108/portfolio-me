@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../../../supabase/supabase";
+import { db } from "@/lib/db";
 import { Card, CardContent } from "./card";
 import { Badge } from "./badge";
 import { Button } from "./button";
@@ -31,7 +31,7 @@ export function DatabaseStatus({ onRetry }: DatabaseStatusProps) {
 
       const checks = await Promise.all(
         requiredTables.map(async (table) => {
-          const { error } = await supabase.from(table).select("id").limit(1);
+          const { error } = await db.from(table).select("id").limit(1);
           return { table, error };
         }),
       );

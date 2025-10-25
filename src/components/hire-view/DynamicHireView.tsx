@@ -30,14 +30,13 @@ import {
   Sun,
   Palette,
 } from "lucide-react";
-import { supabase } from "../../../supabase/supabase";
+import { db } from "@/lib/db";
 import { useToast } from "@/components/ui/use-toast";
 import { LoadingSpinner, LoadingScreen } from "@/components/ui/loading-spinner";
 import ErrorBoundary from "@/components/ui/error-boundary";
 import HireViewErrorBoundary from "./HireViewErrorBoundary";
 import DatabaseStatus from "@/components/ui/database-status";
 import ChatWidget from "@/components/ui/chat-widget";
-import { testSupabaseConnection, testAllTables } from "@/lib/connection-test";
 
 interface HireSection {
   id: string;
@@ -55,6 +54,7 @@ interface HireSkill {
   proficiency: number;
   color: string;
   order_index: number;
+  is_active?: boolean;
 }
 
 interface HireExperience {
@@ -68,6 +68,7 @@ interface HireExperience {
   location: string;
   achievements: string[];
   order_index: number;
+  is_active?: boolean;
 }
 
 interface HireContactField {
@@ -77,6 +78,7 @@ interface HireContactField {
   placeholder: string;
   is_required: boolean;
   order_index: number;
+  is_active?: boolean;
 }
 
 interface DynamicHireViewProps {
@@ -105,10 +107,10 @@ function ConnectionStatus() {
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
-    // Test Supabase connection
+    // Test database connection
     const testConnection = async () => {
       try {
-        const { error } = await supabase
+        const { error } = await db
           .from("hire_sections")
           .select("id")
           .limit(1);
@@ -206,43 +208,37 @@ export default function DynamicHireView({
   const { toast } = useToast();
 
   useEffect(() => {
-    // Test connection first
-    testSupabaseConnection().then((result) => {
-      console.log("Connection test result:", result);
-      if (!result.success) {
-        setError(`Database connection failed: ${result.error}`);
-        setIsLoading(false);
-        return;
-      }
-
-      // If connection is successful, proceed with data fetching
-      fetchHireViewData();
-      setupRealtimeSubscriptions();
-      loadThemeSettings();
-      fetchProfileData();
-    });
+    // Simply proceed with data fetching
+    // Connection test is handled by the db helper layer
+    fetchHireViewData();
+    setupRealtimeSubscriptions();
+    loadThemeSettings();
+    fetchProfileData();
   }, []);
 
   // Fetch profile data for chatbot
   const fetchProfileData = async () => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", "main")
-        .single();
-
-      if (data && !error) {
-        setProfile(data);
+      // Try to fetch active profile from REST API first
+      const API_URL = import.meta.env.VITE_API_URL || '/api';
+      const response = await fetch(`${API_URL}/profiles?activeOnly=true`);
+      const result = await response.json();
+      
+      if (result.success && result.data && result.data.length > 0) {
+        setProfile(result.data[0]);
       } else {
-        // Fallback data
-        setProfile({
-          full_name: "Ramya Lakhani",
-          bio: "Full-stack developer passionate about creating amazing digital experiences",
-          role: "Full-Stack Developer",
-          avatar_url:
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
-        });
+        // Fallback to db helper
+        const { data, error } = await db
+          .from("profiles")
+          .select("*")
+          .eq("id", "main")
+          .single();
+
+        if (data && !error) {
+          setProfile(data);
+        } else {
+          throw error;
+        }
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -271,11 +267,10 @@ export default function DynamicHireView({
       }
 
       // Fallback: try to fetch from a theme configuration table if it exists
-      const { data: themeData, error } = await supabase
+      const { data: themeData, error } = await db
         .from("theme_settings")
         .select("*")
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
 
       if (themeData && !error) {
         const theme = {
@@ -337,22 +332,22 @@ export default function DynamicHireView({
 
         const [sectionsRes, skillsRes, experiencesRes, contactFieldsRes] =
           await Promise.all([
-            supabase
+            db
               .from("hire_sections")
               .select("*")
               .eq("is_active", true)
               .order("order_index", { ascending: true }),
-            supabase
+            db
               .from("hire_skills")
               .select("*")
               .eq("is_active", true)
               .order("order_index", { ascending: true }),
-            supabase
+            db
               .from("hire_experience")
               .select("*")
               .eq("is_active", true)
               .order("order_index", { ascending: true }),
-            supabase
+            db
               .from("hire_contact_fields")
               .select("*")
               .eq("is_active", true)
@@ -430,131 +425,13 @@ export default function DynamicHireView({
   );
 
   const setupRealtimeSubscriptions = useCallback(() => {
-    const sessionId = `hireview_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    const sectionsChannel = supabase
-      .channel(`${sessionId}_sections`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "hire_sections" },
-        (payload) => {
-          console.log("HireView: Sections updated:", payload);
-          // Immediate optimistic update for better UX
-          if (payload.eventType === "UPDATE" && payload.new) {
-            setSections((prev) =>
-              prev.map((section) =>
-                section.id === payload.new.id ? payload.new : section,
-              ),
-            );
-          } else if (payload.eventType === "INSERT" && payload.new) {
-            setSections((prev) =>
-              [...prev, payload.new].sort(
-                (a, b) => a.order_index - b.order_index,
-              ),
-            );
-          } else if (payload.eventType === "DELETE" && payload.old) {
-            setSections((prev) =>
-              prev.filter((section) => section.id !== payload.old.id),
-            );
-          }
-          // Also refresh data to ensure consistency
-          setTimeout(() => fetchHireViewData(false), 100);
-        },
-      )
-      .subscribe();
-
-    const skillsChannel = supabase
-      .channel(`${sessionId}_skills`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "hire_skills" },
-        (payload) => {
-          console.log("HireView: Skills updated:", payload);
-          if (payload.eventType === "UPDATE" && payload.new) {
-            setSkills((prev) =>
-              prev.map((skill) =>
-                skill.id === payload.new.id ? payload.new : skill,
-              ),
-            );
-          } else if (payload.eventType === "INSERT" && payload.new) {
-            setSkills((prev) =>
-              [...prev, payload.new].sort(
-                (a, b) => a.order_index - b.order_index,
-              ),
-            );
-          } else if (payload.eventType === "DELETE" && payload.old) {
-            setSkills((prev) =>
-              prev.filter((skill) => skill.id !== payload.old.id),
-            );
-          }
-          setTimeout(() => fetchHireViewData(false), 100);
-        },
-      )
-      .subscribe();
-
-    const experienceChannel = supabase
-      .channel(`${sessionId}_experience`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "hire_experience" },
-        (payload) => {
-          console.log("HireView: Experience updated:", payload);
-          if (payload.eventType === "UPDATE" && payload.new) {
-            setExperiences((prev) =>
-              prev.map((exp) =>
-                exp.id === payload.new.id ? payload.new : exp,
-              ),
-            );
-          } else if (payload.eventType === "INSERT" && payload.new) {
-            setExperiences((prev) =>
-              [...prev, payload.new].sort(
-                (a, b) => a.order_index - b.order_index,
-              ),
-            );
-          } else if (payload.eventType === "DELETE" && payload.old) {
-            setExperiences((prev) =>
-              prev.filter((exp) => exp.id !== payload.old.id),
-            );
-          }
-          setTimeout(() => fetchHireViewData(false), 100);
-        },
-      )
-      .subscribe();
-
-    const contactFieldsChannel = supabase
-      .channel(`${sessionId}_contact_fields`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "hire_contact_fields" },
-        (payload) => {
-          console.log("HireView: Contact fields updated:", payload);
-          if (payload.eventType === "UPDATE" && payload.new) {
-            setContactFields((prev) =>
-              prev.map((field) =>
-                field.id === payload.new.id ? payload.new : field,
-              ),
-            );
-          } else if (payload.eventType === "INSERT" && payload.new) {
-            setContactFields((prev) =>
-              [...prev, payload.new].sort(
-                (a, b) => a.order_index - b.order_index,
-              ),
-            );
-          } else if (payload.eventType === "DELETE" && payload.old) {
-            setContactFields((prev) =>
-              prev.filter((field) => field.id !== payload.old.id),
-            );
-          }
-          setTimeout(() => fetchHireViewData(false), 100);
-        },
-      )
-      .subscribe();
-
+    // Note: REST API doesn't support realtime subscriptions like Supabase
+    // If realtime updates are needed, consider implementing polling or websockets separately
+    console.log("Realtime subscriptions not available with REST API");
+    
+    // Return empty cleanup function
     return () => {
-      sectionsChannel.unsubscribe();
-      skillsChannel.unsubscribe();
-      experienceChannel.unsubscribe();
-      contactFieldsChannel.unsubscribe();
+      console.log("No realtime subscriptions to clean up");
     };
   }, [fetchHireViewData]);
 
@@ -573,7 +450,7 @@ export default function DynamicHireView({
           contactForm[field.id];
       });
 
-      const { error } = await supabase.from("contact_submissions").insert({
+      const { error } = await db.from("contact_submissions").insert({
         name: submissionData.full_name || submissionData.name || "Unknown",
         email: submissionData.email_address || submissionData.email || "",
         subject: submissionData.subject || "Hire Inquiry",
@@ -618,7 +495,7 @@ export default function DynamicHireView({
       let result;
       if (enhanced) {
         // Check if LinkedIn URL is available
-        const resumeData = await supabase
+        const resumeData = await db
           .from("resume_data")
           .select("*")
           .single();
@@ -692,9 +569,9 @@ export default function DynamicHireView({
           background: `linear-gradient(135deg, ${themeSettings.primaryColor}, ${themeSettings.secondaryColor})`,
         }}
       >
-        {section.content?.profile_photo ? (
+        {section.content?.profile_photo || profile?.avatar_url ? (
           <img
-            src={section.content.profile_photo}
+            src={section.content?.profile_photo || profile?.avatar_url}
             alt={profile?.full_name || "Profile"}
             className="w-full h-full object-cover"
             onError={(e) => {
@@ -703,28 +580,28 @@ export default function DynamicHireView({
             }}
           />
         ) : (
-          <span>{section.content?.avatar_text || "RL"}</span>
+          <span>{section.content?.avatar_text || profile?.full_name?.charAt(0) || "RL"}</span>
         )}
       </div>
       <h1
         className={`text-4xl font-bold ${isDarkMode ? "text-white" : "text-gray-900"}`}
         style={{ fontFamily: themeSettings.fontFamily }}
       >
-        {section.content?.headline || "Professional Developer"}
+        {section.content?.headline || profile?.full_name || "Professional Developer"}
       </h1>
       <p
         className="text-xl font-medium"
         style={{ color: themeSettings.primaryColor }}
       >
-        {section.content?.tagline || "Full-Stack Developer"}
+        {section.content?.tagline || profile?.role || "Full-Stack Developer"}
       </p>
-      {section.content?.bio && (
+      {section.content?.bio || profile?.bio ? (
         <p
           className={`text-lg max-w-2xl mx-auto ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
         >
-          {section.content.bio}
+          {section.content?.bio || profile?.bio}
         </p>
-      )}
+      ) : null}
       <div
         className={`flex flex-wrap justify-center gap-4 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
       >

@@ -36,6 +36,7 @@ import {
   Users,
   Palette,
   Settings,
+  ExternalLink,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { useToast } from "@/components/ui/use-toast";
@@ -109,6 +110,8 @@ export default function PortfolioCMS() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState<Partial<Project> | null>(null);
   const { toast } = useToast();
 
   const fetchData = useCallback(async () => {
@@ -385,6 +388,53 @@ export default function PortfolioCMS() {
         description: error.message || "Failed to delete project.",
         variant: "destructive",
       });
+    }
+  };
+
+  const startEditProject = (project: Project) => {
+    setEditingProjectId(project.id);
+    setEditFormData({ ...project });
+  };
+
+  const cancelEditProject = () => {
+    setEditingProjectId(null);
+    setEditFormData(null);
+  };
+
+  const saveProjectChanges = async () => {
+    if (!editFormData || !editingProjectId) return;
+
+    try {
+      setIsSaving(true);
+
+      const { error } = await db
+        .from("projects")
+        .update(editFormData)
+        .eq("id", editingProjectId);
+
+      if (error) throw error;
+
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === editingProjectId ? { ...p, ...editFormData } : p,
+        ),
+      );
+
+      toast({
+        title: "Project Saved",
+        description: "Project details have been updated successfully.",
+      });
+
+      setEditingProjectId(null);
+      setEditFormData(null);
+    } catch (error: any) {
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save project changes.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -689,11 +739,20 @@ export default function PortfolioCMS() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="p-4 border rounded-lg space-y-4"
+                    className="border rounded-lg overflow-hidden"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <h4 className="font-semibold">{project.title}</h4>
+                    {/* Project Header */}
+                    <div className="p-4 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => editingProjectId === project.id ? cancelEditProject() : startEditProject(project)}
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <Edit className="w-4 h-4 text-gray-400" />
+                        <div>
+                          <h4 className="font-semibold">{project.title || "Untitled Project"}</h4>
+                          <p className="text-sm text-gray-500">{project.description || "No description"}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
                         {getStatusBadge(project.is_active)}
                         {project.featured && (
                           <Badge
@@ -705,37 +764,244 @@ export default function PortfolioCMS() {
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={project.is_active || false}
-                          onCheckedChange={(checked) =>
-                            updateProjectStatus(project.id, checked)
-                          }
-                        />
-                        <span className="text-sm text-gray-500">Active</span>
-                        <Button
-                          onClick={() => deleteProject(project.id)}
-                          variant="destructive"
-                          size="sm"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
                     </div>
-                    <p className="text-sm text-gray-600">
-                      {project.description}
-                    </p>
-                    {project.tech_stack && (
-                      <div className="flex flex-wrap gap-1">
-                        {project.tech_stack.map((tech, index) => (
-                          <Badge
-                            key={index}
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            {tech}
-                          </Badge>
-                        ))}
+
+                    {/* Project Edit Form */}
+                    {editingProjectId === project.id && editFormData && (
+                      <div className="p-6 bg-white border-t space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Project Title *</Label>
+                            <Input
+                              value={editFormData.title || ""}
+                              onChange={(e) =>
+                                setEditFormData({
+                                  ...editFormData,
+                                  title: e.target.value,
+                                })
+                              }
+                              placeholder="Enter project title"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Featured</Label>
+                            <Switch
+                              checked={editFormData.featured || false}
+                              onCheckedChange={(checked) =>
+                                setEditFormData({
+                                  ...editFormData,
+                                  featured: checked,
+                                })
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Short Description *</Label>
+                          <Textarea
+                            value={editFormData.description || ""}
+                            onChange={(e) =>
+                              setEditFormData({
+                                ...editFormData,
+                                description: e.target.value,
+                              })
+                            }
+                            placeholder="Brief description (shown in lists)"
+                            rows={2}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Long Description</Label>
+                          <Textarea
+                            value={editFormData.long_description || ""}
+                            onChange={(e) =>
+                              setEditFormData({
+                                ...editFormData,
+                                long_description: e.target.value,
+                              })
+                            }
+                            placeholder="Detailed description (shown in project details)"
+                            rows={3}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>GitHub URL</Label>
+                            <Input
+                              value={editFormData.github_url || ""}
+                              onChange={(e) =>
+                                setEditFormData({
+                                  ...editFormData,
+                                  github_url: e.target.value,
+                                })
+                              }
+                              placeholder="https://github.com/..."
+                              type="url"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Live Demo URL</Label>
+                            <Input
+                              value={editFormData.live_url || ""}
+                              onChange={(e) =>
+                                setEditFormData({
+                                  ...editFormData,
+                                  live_url: e.target.value,
+                                })
+                              }
+                              placeholder="https://..."
+                              type="url"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Image URL</Label>
+                          <Input
+                            value={editFormData.image_url || ""}
+                            onChange={(e) =>
+                              setEditFormData({
+                                ...editFormData,
+                                image_url: e.target.value,
+                              })
+                            }
+                            placeholder="https://..."
+                            type="url"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Video URL</Label>
+                          <Input
+                            value={editFormData.video_url || ""}
+                            onChange={(e) =>
+                              setEditFormData({
+                                ...editFormData,
+                                video_url: e.target.value,
+                              })
+                            }
+                            placeholder="https://youtube.com/... or https://vimeo.com/..."
+                            type="url"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Tech Stack (comma-separated)</Label>
+                          <Input
+                            value={
+                              Array.isArray(editFormData.tech_stack)
+                                ? editFormData.tech_stack.join(", ")
+                                : ""
+                            }
+                            onChange={(e) =>
+                              setEditFormData({
+                                ...editFormData,
+                                tech_stack: e.target.value
+                                  .split(",")
+                                  .map((t) => t.trim())
+                                  .filter((t) => t),
+                              })
+                            }
+                            placeholder="React, Node.js, MongoDB, etc."
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between pt-4 border-t">
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={editFormData.is_active || false}
+                              onCheckedChange={(checked) =>
+                                setEditFormData({
+                                  ...editFormData,
+                                  is_active: checked,
+                                })
+                              }
+                            />
+                            <span className="text-sm text-gray-600">Active</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              onClick={cancelEditProject}
+                              variant="outline"
+                              disabled={isSaving}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={saveProjectChanges}
+                              disabled={isSaving}
+                            >
+                              {isSaving ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <Save className="w-4 h-4 mr-2" />
+                              )}
+                              Save Changes
+                            </Button>
+                            <Button
+                              onClick={() => deleteProject(project.id)}
+                              variant="destructive"
+                              size="sm"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Project Summary (when not editing) */}
+                    {editingProjectId !== project.id && (
+                      <div className="p-4 bg-white space-y-3 border-t">
+                        {project.tech_stack && project.tech_stack.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {project.tech_stack.map((tech, index) => (
+                              <Badge
+                                key={index}
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {tech}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-sm">
+                          {project.github_url && (
+                            <a
+                              href={project.github_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              GitHub
+                            </a>
+                          )}
+                          {project.live_url && (
+                            <a
+                              href={project.live_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              Live Demo
+                            </a>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 pt-2 border-t">
+                          <Switch
+                            checked={project.is_active || false}
+                            onCheckedChange={(checked) =>
+                              updateProjectStatus(project.id, checked)
+                            }
+                          />
+                          <span className="text-sm text-gray-500">Active</span>
+                        </div>
                       </div>
                     )}
                   </motion.div>

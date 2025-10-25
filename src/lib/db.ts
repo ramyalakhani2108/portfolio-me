@@ -1,5 +1,16 @@
 // API endpoint for backend server
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_URL = (() => {
+  const env = import.meta.env.VITE_API_URL;
+  if (env) return env;
+  
+  // In production, use relative URL to same domain
+  if (import.meta.env.PROD) {
+    return '/api';
+  }
+  
+  // In development, use localhost
+  return 'http://localhost:3001/api';
+})();
 
 // Fetch helper function
 const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
