@@ -349,12 +349,11 @@ export default function LandingPage() {
   return (
     <div
       ref={containerRef}
-      className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"
-      style={{ height: "100vh" }}
+      className="min-h-screen relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-y-auto"
     >
-      {/* Cursor Following Light Spot */}
+      {/* Cursor Following Light Spot - Hidden on mobile */}
       <motion.div
-        className="fixed w-64 h-64 rounded-full pointer-events-none z-10"
+        className="fixed w-64 h-64 rounded-full pointer-events-none z-10 hidden sm:block"
         style={{
           background:
             "radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 50%, transparent 70%)",
@@ -370,7 +369,7 @@ export default function LandingPage() {
       <motion.div
         id="particles-js"
         ref={particlesRef}
-        className="absolute inset-0"
+        className="absolute inset-0 hidden sm:block"
         style={{ y: backgroundY, willChange: "transform" }}
       />
 
@@ -380,8 +379,8 @@ export default function LandingPage() {
       </div>
 
       {/* Main Content */}
-      <main className="relative z-20 flex items-center justify-center h-screen px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto w-full items-center">
+      <main className="relative z-20 w-full px-4 sm:px-6 py-8 sm:py-12 lg:py-0 lg:min-h-screen lg:flex lg:items-center lg:justify-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 max-w-7xl mx-auto w-full lg:items-center">
           {/* Profile Section */}
           <motion.div
             variants={containerVariants}
@@ -393,12 +392,12 @@ export default function LandingPage() {
             {/* 3D Profile Card with Flip Effect */}
             <motion.div
               variants={itemVariants}
-              className="mb-8"
+              className="mb-6 sm:mb-8"
               onMouseEnter={() => setIsHovering(true)}
               onMouseLeave={() => setIsHovering(false)}
             >
               <motion.div
-                className="relative w-32 h-32 lg:w-40 lg:h-40 mx-auto lg:mx-0 mb-6 perspective-1000"
+                className="relative w-32 h-32 sm:w-40 sm:h-40 mx-auto lg:mx-0 mb-4 sm:mb-6 perspective-1000"
                 animate={{ rotateY: isHovering ? 180 : 0 }}
                 transition={{ duration: 0.8, ease: "easeInOut" }}
                 style={{ transformStyle: "preserve-3d" }}
@@ -439,30 +438,30 @@ export default function LandingPage() {
             </motion.div>
 
             {/* Profile Info */}
-            <motion.div variants={itemVariants} className="mb-8">
-              <h1 className="text-4xl lg:text-6xl font-bold text-white mb-4 leading-tight">
+            <motion.div variants={itemVariants} className="mb-6 sm:mb-8">
+              <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-white mb-3 sm:mb-4 leading-tight">
                 {profile?.full_name || "Ramya Lakhani"}
               </h1>
-              <p className="text-xl lg:text-2xl text-cyan-300 font-medium mb-4">
+              <p className="text-lg sm:text-xl lg:text-2xl text-cyan-300 font-medium mb-3 sm:mb-4">
                 {profile?.role || "Full-Stack Developer"}
               </p>
-              <p className="text-gray-300 text-lg leading-relaxed max-w-lg mx-auto lg:mx-0">
+              <p className="text-sm sm:text-base text-gray-300 leading-relaxed max-w-lg mx-auto lg:mx-0">
                 {profile?.bio ||
                   "Passionate developer creating amazing digital experiences with modern technologies."}
               </p>
               
               {/* Additional Profile Details */}
-              <div className="flex flex-wrap gap-3 mt-6 justify-center lg:justify-start">
+              <div className="flex flex-wrap gap-2 sm:gap-3 mt-4 sm:mt-6 justify-center lg:justify-start">
                 {profile?.experience && (
-                  <div className="px-4 py-2 bg-cyan-500/20 backdrop-blur-sm rounded-full border border-cyan-400/40">
-                    <p className="text-sm text-cyan-300">
+                  <div className="px-3 sm:px-4 py-2 bg-cyan-500/20 backdrop-blur-sm rounded-full border border-cyan-400/40">
+                    <p className="text-xs sm:text-sm text-cyan-300">
                       📅 {profile.experience}
                     </p>
                   </div>
                 )}
                 {profile?.status && (
-                  <div className="px-4 py-2 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-400/40">
-                    <p className="text-sm text-purple-300">
+                  <div className="px-3 sm:px-4 py-2 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-400/40">
+                    <p className="text-xs sm:text-sm text-purple-300">
                       ✨ {profile.status}
                     </p>
                   </div>
@@ -481,7 +480,7 @@ export default function LandingPage() {
             {/* Enhanced Glass morphism container */}
             <motion.div
               variants={itemVariants}
-              className="backdrop-blur-2xl bg-gradient-to-br from-white/10 to-white/5 rounded-2xl p-8 lg:p-12 border border-white/20 shadow-xl relative overflow-hidden"
+              className="backdrop-blur-2xl bg-gradient-to-br from-white/10 to-white/5 rounded-2xl p-6 sm:p-8 lg:p-12 border border-white/20 shadow-xl relative overflow-hidden"
             >
               {/* Animated background elements */}
               <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded-2xl"></div>
@@ -489,11 +488,11 @@ export default function LandingPage() {
 
               <div className="relative z-10">
                 {/* Staggered Text Animation */}
-                <motion.div className="mb-6">
+                <motion.div className="mb-4 sm:mb-6">
                   {"Choose Your".split("").map((char, index) => (
                     <motion.span
                       key={index}
-                      className="inline-block text-3xl lg:text-5xl font-bold text-white"
+                      className="inline-block text-2xl sm:text-3xl lg:text-5xl font-bold text-white"
                       variants={{
                         hidden: { opacity: 0, y: 30, rotateX: -90 },
                         visible: {
@@ -516,7 +515,7 @@ export default function LandingPage() {
                 </motion.div>
 
                 <motion.div
-                  className="block text-3xl lg:text-5xl font-bold mb-6"
+                  className="block text-2xl sm:text-3xl lg:text-5xl font-bold mb-4 sm:mb-6"
                   variants={itemVariants}
                 >
                   <motion.span
@@ -539,7 +538,7 @@ export default function LandingPage() {
 
                 <motion.p
                   variants={itemVariants}
-                  className="text-lg lg:text-xl text-white/90 mb-8 leading-relaxed"
+                  className="text-base sm:text-lg lg:text-xl text-white/90 mb-6 sm:mb-8 leading-relaxed"
                 >
                   Two distinct experiences crafted for different perspectives.
                   <br className="hidden lg:block" />
@@ -559,7 +558,7 @@ export default function LandingPage() {
                 </motion.p>
 
                 {/* Enhanced Path Selection Buttons */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   {/* Employer Flow Button */}
                   <motion.button
                     variants={buttonVariants}
@@ -567,7 +566,7 @@ export default function LandingPage() {
                     whileTap="tap"
                     onClick={() => handleFlowSelection("employer")}
                     disabled={isLoading}
-                    className="group relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-blue-500/15 to-cyan-500/15 hover:from-blue-500/25 hover:to-cyan-500/25 border border-white/20 hover:border-cyan-400/40 rounded-2xl p-8 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-blue-500/15 to-cyan-500/15 hover:from-blue-500/25 hover:to-cyan-500/25 border border-white/20 hover:border-cyan-400/40 rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="relative z-10">
                       <motion.div
@@ -578,19 +577,19 @@ export default function LandingPage() {
                           transition: { duration: 0.4 },
                         }}
                       >
-                        <Briefcase className="w-12 h-12 text-cyan-400 mx-auto" />
+                        <Briefcase className="w-10 sm:w-12 h-10 sm:h-12 text-cyan-400 mx-auto" />
                       </motion.div>
-                      <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-cyan-100 transition-colors">
+                      <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3 group-hover:text-cyan-100 transition-colors">
                         I'm Here to Hire
                       </h3>
-                      <p className="text-white/70 text-sm leading-relaxed group-hover:text-white/90 transition-colors">
+                      <p className="text-white/70 text-xs sm:text-sm leading-relaxed group-hover:text-white/90 transition-colors">
                         <strong className="text-cyan-300">
                           Streamlined resume experience
                         </strong>
                         <br />
                         Timeline • Skills Matrix • Direct Contact
                       </p>
-                      <div className="mt-4 text-xs text-cyan-300/80 group-hover:text-cyan-300 transition-colors">
+                      <div className="mt-3 sm:mt-4 text-xs text-cyan-300/80 group-hover:text-cyan-300 transition-colors">
                         ⚡ Quick overview • 📊 Skills assessment • 📞 Easy
                         contact
                       </div>
@@ -604,7 +603,7 @@ export default function LandingPage() {
                     whileTap="tap"
                     onClick={() => handleFlowSelection("viewer")}
                     disabled={isLoading}
-                    className="group relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-purple-500/15 to-pink-500/15 hover:from-purple-500/25 hover:to-pink-500/25 border border-white/20 hover:border-purple-400/40 rounded-2xl p-8 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-purple-500/15 to-pink-500/15 hover:from-purple-500/25 hover:to-pink-500/25 border border-white/20 hover:border-purple-400/40 rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="relative z-10">
                       <motion.div
@@ -615,19 +614,19 @@ export default function LandingPage() {
                           transition: { duration: 0.4 },
                         }}
                       >
-                        <FolderOpen className="w-12 h-12 text-pink-400 mx-auto" />
+                        <FolderOpen className="w-10 sm:w-12 h-10 sm:h-12 text-pink-400 mx-auto" />
                       </motion.div>
-                      <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-purple-100 transition-colors">
+                      <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3 group-hover:text-purple-100 transition-colors">
                         I'm Here to Explore
                       </h3>
-                      <p className="text-white/70 text-sm leading-relaxed group-hover:text-white/90 transition-colors">
+                      <p className="text-white/70 text-xs sm:text-sm leading-relaxed group-hover:text-white/90 transition-colors">
                         <strong className="text-purple-300">
                           Full creative experience
                         </strong>
                         <br />
                         3D Animations • Project Showcases • Blog
                       </p>
-                      <div className="mt-4 text-xs text-purple-300/80 group-hover:text-purple-300 transition-colors">
+                      <div className="mt-3 sm:mt-4 text-xs text-purple-300/80 group-hover:text-purple-300 transition-colors">
                         🎨 Interactive demos • 🚀 3D experiences • 📝 Insights
                       </div>
                     </div>
@@ -641,10 +640,10 @@ export default function LandingPage() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
-                      className="mt-8 flex items-center justify-center gap-3 text-white/80"
+                      className="mt-6 sm:mt-8 flex items-center justify-center gap-3 text-white/80"
                     >
                       <div className="w-6 h-6 border-2 border-white/30 border-t-cyan-400 rounded-full animate-spin"></div>
-                      <span className="text-lg">
+                      <span className="text-base sm:text-lg">
                         Preparing your experience...
                       </span>
                     </motion.div>
@@ -654,7 +653,7 @@ export default function LandingPage() {
                 {/* Additional Info */}
                 <motion.div
                   variants={itemVariants}
-                  className="mt-8 text-white/60 text-sm"
+                  className="mt-6 sm:mt-8 text-white/60 text-xs sm:text-sm"
                 >
                   <p className="mb-2">
                     <span className="text-cyan-300">💡 Pro tip:</span> Both
@@ -663,7 +662,7 @@ export default function LandingPage() {
                   <p className="text-xs text-white/40">
                     Your choice helps me tailor the experience to your needs.
                   </p>
-                  <div className="mt-4 text-xs text-white/30">
+                  <div className="mt-3 sm:mt-4 text-xs text-white/30">
                     Last updated:{" "}
                     {new Date(lastDataRefresh).toLocaleTimeString()}
                   </div>
@@ -677,11 +676,11 @@ export default function LandingPage() {
       {/* Enhanced Gemini AI Chatbot - Available on Landing Page */}
       {profile && <ChatWidget profile={profile as any} />}
 
-      {/* Floating elements for extra visual appeal */}
-      <div className="absolute top-20 left-10 w-2 h-2 bg-cyan-400 rounded-full animate-pulse opacity-40"></div>
-      <div className="absolute top-40 right-20 w-1 h-1 bg-purple-400 rounded-full animate-pulse opacity-30 delay-1000"></div>
-      <div className="absolute bottom-32 left-20 w-3 h-3 bg-pink-400 rounded-full animate-pulse opacity-35 delay-2000"></div>
-      <div className="absolute bottom-40 right-32 w-1.5 h-1.5 bg-cyan-300 rounded-full animate-pulse opacity-25 delay-3000"></div>
+      {/* Floating elements for extra visual appeal - Hidden on mobile */}
+      <div className="absolute top-20 left-10 w-2 h-2 bg-cyan-400 rounded-full animate-pulse opacity-40 hidden sm:block"></div>
+      <div className="absolute top-40 right-20 w-1 h-1 bg-purple-400 rounded-full animate-pulse opacity-30 delay-1000 hidden sm:block"></div>
+      <div className="absolute bottom-32 left-20 w-3 h-3 bg-pink-400 rounded-full animate-pulse opacity-35 delay-2000 hidden sm:block"></div>
+      <div className="absolute bottom-40 right-32 w-1.5 h-1.5 bg-cyan-300 rounded-full animate-pulse opacity-25 delay-3000 hidden sm:block"></div>
     </div>
   );
 }

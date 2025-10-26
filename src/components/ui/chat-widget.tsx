@@ -68,7 +68,7 @@ const TypingIndicator = () => {
         <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
         <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce"></div>
       </div>
-      <span className="text-white/60 text-sm ml-2">AI is thinking...</span>
+      <span className="text-white/60 text-sm ml-2">Typing...</span>
     </div>
   );
 };
@@ -110,30 +110,21 @@ const MessageBubble = ({
         stiffness: 200,
         damping: 20,
       }}
-      className={`flex ${message.isUser ? "justify-end" : "justify-start"} ${isLast ? "mb-2" : "mb-4"} group`}
+      className={`flex ${message.isUser ? "justify-end" : "justify-start"} ${isLast ? "mb-3" : "mb-5"} group`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
       {/* Avatar for bot messages */}
       {!message.isUser && (
         <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center mr-3 mt-1 flex-shrink-0 overflow-hidden">
-          <img
-            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80"
-            alt={profile?.full_name || "AI Assistant"}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src =
-                "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face&auto=format&q=80";
-            }}
-          />
+          <Bot className="w-5 h-5 text-white" />
         </div>
       )}
 
-      <div className="flex flex-col max-w-[85%]">
+      <div className="flex flex-col max-w-[100%] sm:max-w-[85%]">
         <div
           className={cn(
-            "p-4 rounded-2xl text-sm relative shadow-lg backdrop-blur-sm",
+            "p-3 sm:p-4 rounded-2xl text-sm relative shadow-lg backdrop-blur-sm break-words",
             message.isUser
               ? "bg-gradient-to-r from-purple-600 to-cyan-600 text-white ml-auto"
               : "bg-white/15 text-white/95 border border-white/20",
@@ -254,8 +245,8 @@ const SuggestedQuestions = ({
   ];
 
   return (
-    <div className="space-y-2 p-4">
-      <p className="text-white/60 text-sm mb-3 text-center">
+    <div className="space-y-2 p-3 sm:p-4">
+      <p className="text-white/60 text-xs sm:text-sm mb-3 text-center">
         Ask me anything about {profile.full_name}'s portfolio!
       </p>
       {questions.map((question, index) => (
@@ -265,7 +256,7 @@ const SuggestedQuestions = ({
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: index * 0.1 }}
           onClick={() => onQuestionClick(question)}
-          className="block w-full text-left text-xs text-white/50 hover:text-white/80 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-200 border border-white/10 hover:border-white/20"
+          className="block w-full text-left text-xs text-white/50 hover:text-white/80 p-2 sm:p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-200 border border-white/10 hover:border-white/20 line-clamp-2"
         >
           {question}
         </motion.button>
@@ -388,7 +379,7 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
     // Add typing indicator
     const typingMessage: ChatMessage = {
       id: "typing",
-      text: "AI is analyzing your question...",
+      text: "Analyzing your question...",
       isUser: false,
       timestamp: new Date(),
       isTyping: true,
@@ -443,7 +434,7 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
   };
 
   return (
-    <div className={cn("fixed bottom-6 right-6 z-50", className)}>
+    <div className={cn("fixed bottom-2 sm:bottom-4 right-2 sm:right-4 md:bottom-6 md:right-6 z-50", className)}>
       {/* Chat Window */}
       <AnimatePresence>
         {isOpen && (
@@ -452,38 +443,29 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className={`absolute bottom-16 right-0 bg-slate-900/95 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ${
-              isMinimized ? "w-80 h-16" : "w-96 max-w-[calc(100vw-3rem)]"
+            className={`absolute bottom-14 sm:bottom-16 md:bottom-20 right-0 bg-slate-900/95 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ${
+              isMinimized ? "w-64 sm:w-72 md:w-80 h-16" : "w-[min(calc(100vw-1rem),calc(100vw-2rem))] sm:w-80 md:w-96 max-h-[calc(100vh-6rem)] sm:max-h-[calc(100vh-8rem)]"
             }`}
           >
             {/* Header */}
-            <div className="p-4 border-b border-white/10 bg-gradient-to-r from-purple-600/20 to-cyan-600/20">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center relative overflow-hidden">
-                    <img
-                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80"
-                      alt={profile?.full_name || "AI Assistant"}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src =
-                          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face&auto=format&q=80";
-                      }}
-                    />
+            <div className="p-3 sm:p-4 border-b border-white/10 bg-gradient-to-r from-purple-600/20 to-cyan-600/20">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center relative overflow-hidden flex-shrink-0">
+                    <Bot className="w-5 h-5 text-white" />
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>
                   </div>
-                  <div>
-                    <h3 className="text-white font-medium text-sm">
-                      AI Portfolio Assistant
+                  <div className="min-w-0">
+                    <h3 className="text-white font-medium text-sm truncate">
+                      Ramya's Portfolio Assistant
                     </h3>
-                    <p className="text-white/60 text-xs flex items-center gap-1">
-                      <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                      Online • Powered by Gemini AI
+                    <p className="text-white/60 text-xs flex items-center gap-1 truncate">
+                      <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse flex-shrink-0"></span>
+                      <span className="truncate">Online</span>
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={() => setIsMinimized(!isMinimized)}
                     className="text-white/60 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
@@ -506,7 +488,7 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
 
             {/* Messages */}
             {!isMinimized && (
-              <div className="h-80 overflow-y-auto p-4 space-y-1 custom-scrollbar">
+              <div className="h-40 sm:h-48 md:h-60 lg:h-80 overflow-y-auto p-3 sm:p-4 space-y-2 custom-scrollbar">
                 {messages.length === 0 ? (
                   <SuggestedQuestions
                     onQuestionClick={handleSendMessage}
@@ -533,7 +515,7 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
             {!isMinimized && (
               <form
                 onSubmit={handleSubmit}
-                className="p-4 border-t border-white/10 bg-slate-900/50"
+                className="p-3 sm:p-4 border-t border-white/10 bg-slate-900/50"
               >
                 {replyingTo && (
                   <div className="mb-3 p-2 bg-white/5 rounded-lg border border-white/10">
@@ -558,12 +540,12 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
                     </p>
                   </div>
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-1.5 sm:gap-2">
                   <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask about skills, projects, experience..."
-                    className="flex-1 bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-purple-400/20 rounded-xl"
+                    placeholder="Ask me anything..."
+                    className="flex-1 bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-purple-400/20 rounded-xl text-xs sm:text-sm h-9 sm:h-10"
                     maxLength={500}
                     disabled={isLoading}
                   />
@@ -571,22 +553,22 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
                     type="submit"
                     size="sm"
                     disabled={!input.trim() || isLoading}
-                    className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white border-0 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white border-0 px-2.5 sm:px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex-shrink-0"
                   >
                     {isLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
                     ) : (
-                      <Send className="w-4 h-4" />
+                      <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     )}
                   </Button>
                 </div>
-                <div className="flex justify-between items-center mt-2 text-xs text-white/40">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-2 text-xs text-white/40">
                   <span>{input.length}/500 characters</span>
                   <div className="flex items-center gap-2">
                     <span>Queries: {3 - queryCount}/3 remaining</span>
                     <div className="flex items-center gap-1">
                       <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse"></div>
-                      <span>AI Ready</span>
+                      <span>Ready</span>
                     </div>
                   </div>
                 </div>
@@ -595,19 +577,19 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
 
             {/* Minimized quick input */}
             {isMinimized && (
-              <div className="px-4 py-2">
-                <div className="flex items-center gap-2">
+              <div className="px-2 sm:px-4 py-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Quick question..."
-                    className="flex-1 bg-white/5 border-white/20 text-white placeholder:text-white/40 text-sm h-8"
+                    placeholder="Ask..."
+                    className="flex-1 bg-white/5 border-white/20 text-white placeholder:text-white/40 text-xs h-7 sm:h-8"
                     onFocus={() => setIsMinimized(false)}
                   />
                   <Button
                     size="sm"
                     onClick={() => setIsMinimized(false)}
-                    className="bg-gradient-to-r from-purple-600 to-cyan-600 h-8 px-2"
+                    className="bg-gradient-to-r from-purple-600 to-cyan-600 h-7 sm:h-8 px-1.5 sm:px-2 text-xs flex-shrink-0"
                   >
                     <Maximize2 className="w-3 h-3" />
                   </Button>
@@ -621,7 +603,7 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
       {/* Floating Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-purple-500/25"
+        className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-purple-500/25"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         initial={{ scale: 0 }}
