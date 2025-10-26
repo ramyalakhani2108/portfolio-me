@@ -554,17 +554,17 @@ export default function DynamicHireView({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="text-center space-y-6"
+      className="text-center space-y-4 sm:space-y-6"
       style={{
         background: isDarkMode
           ? `linear-gradient(135deg, ${themeSettings.primaryColor}20, ${themeSettings.secondaryColor}20)`
           : `linear-gradient(135deg, ${themeSettings.primaryColor}10, ${themeSettings.secondaryColor}10)`,
         borderRadius: `${themeSettings.borderRadius}px`,
-        padding: "3rem 2rem",
+        padding: "2rem 1rem sm:3rem sm:2rem",
       }}
     >
       <div
-        className="w-32 h-32 mx-auto rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-lg overflow-hidden"
+        className="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full flex items-center justify-center text-white text-2xl sm:text-4xl font-bold shadow-lg overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${themeSettings.primaryColor}, ${themeSettings.secondaryColor})`,
         }}
@@ -584,20 +584,20 @@ export default function DynamicHireView({
         )}
       </div>
       <h1
-        className={`text-4xl font-bold ${isDarkMode ? "text-white" : "text-gray-900"}`}
+        className={`text-2xl sm:text-4xl font-bold ${isDarkMode ? "text-white" : "text-gray-900"}`}
         style={{ fontFamily: themeSettings.fontFamily }}
       >
         {section.content?.headline || profile?.full_name || "Professional Developer"}
       </h1>
       <p
-        className="text-xl font-medium"
+        className="text-base sm:text-xl font-medium"
         style={{ color: themeSettings.primaryColor }}
       >
         {section.content?.tagline || profile?.role || "Full-Stack Developer"}
       </p>
       {section.content?.bio || profile?.bio ? (
         <p
-          className={`text-lg max-w-2xl mx-auto ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
+          className={`text-sm sm:text-lg max-w-2xl mx-auto ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
         >
           {section.content?.bio || profile?.bio}
         </p>
@@ -659,23 +659,23 @@ export default function DynamicHireView({
         >
           <CardHeader>
             <CardTitle
-              className={`text-2xl flex items-center gap-2 ${isDarkMode ? "text-white" : "text-gray-900"}`}
+              className={`text-xl sm:text-2xl flex items-center gap-2 ${isDarkMode ? "text-white" : "text-gray-900"}`}
               style={{ fontFamily: themeSettings.fontFamily }}
             >
               <Star
-                className="w-6 h-6"
+                className="w-5 h-5 sm:w-6 sm:h-6"
                 style={{ color: themeSettings.primaryColor }}
               />
               {section.title || "Technical Skills"}
             </CardTitle>
             {section.content?.description && (
-              <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>
+              <p className={`text-sm sm:text-base ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
                 {section.content.description}
               </p>
             )}
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               {allCategories.map((category) => {
                 const categorySkills = activeSkills.filter(
                   (skill) => skill.category === category,
@@ -902,17 +902,17 @@ export default function DynamicHireView({
         >
           <CardHeader>
             <CardTitle
-              className={`text-2xl flex items-center gap-2 ${isDarkMode ? "text-white" : "text-gray-900"}`}
+              className={`text-xl sm:text-2xl flex items-center gap-2 ${isDarkMode ? "text-white" : "text-gray-900"}`}
               style={{ fontFamily: themeSettings.fontFamily }}
             >
               <Mail
-                className="w-6 h-6"
+                className="w-5 h-5 sm:w-6 sm:h-6"
                 style={{ color: themeSettings.primaryColor }}
               />
               {section.title || "Let's Connect"}
             </CardTitle>
             {section.content?.description && (
-              <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>
+              <p className={`text-sm sm:text-base ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
                 {section.content.description}
               </p>
             )}
@@ -939,23 +939,23 @@ export default function DynamicHireView({
                 </p>
               </motion.div>
             ) : (
-              <form onSubmit={handleContactSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form onSubmit={handleContactSubmit} className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {activeContactFields.map((field) => {
                     const isFullWidth = field.field_type === "textarea";
-                    const colSpan = isFullWidth ? "md:col-span-2" : "";
+                    const colSpan = isFullWidth ? "sm:col-span-2" : "";
 
                     return (
                       <div key={field.id} className={`space-y-2 ${colSpan}`}>
                         <label
-                          className={`text-sm font-medium ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
+                          className={`text-xs sm:text-sm font-medium ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
                         >
                           {field.label} {field.is_required && "*"}
                         </label>
                         {field.field_type === "textarea" ? (
                           <Textarea
                             required={field.is_required}
-                            rows={4}
+                            rows={3}
                             value={contactForm[field.id] || ""}
                             onChange={(e) =>
                               setContactForm({
@@ -963,7 +963,7 @@ export default function DynamicHireView({
                                 [field.id]: e.target.value,
                               })
                             }
-                            className={`${isDarkMode ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400" : "bg-white border-blue-200"} focus:border-opacity-100`}
+                            className={`text-sm ${isDarkMode ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400" : "bg-white border-blue-200"} focus:border-opacity-100`}
                             style={{
                               borderColor: `${themeSettings.primaryColor}40`,
                               "--tw-ring-color": themeSettings.primaryColor,
@@ -1206,19 +1206,20 @@ export default function DynamicHireView({
               : "bg-white/80 border-blue-100"
           }`}
         >
-          <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
               {onBackToLanding && (
                 <button
                   onClick={onBackToLanding}
-                  className={`flex items-center gap-2 transition-colors ${
+                  className={`flex items-center gap-1 sm:gap-2 transition-colors text-xs sm:text-base ${
                     isDarkMode
                       ? "text-blue-400 hover:text-blue-300"
                       : "text-blue-600 hover:text-blue-700"
                   }`}
                 >
-                  <ArrowLeft className="w-5 h-5" />
-                  <span className="font-medium">Back to Landing</span>
+                  <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="font-medium hidden sm:inline">Back to Landing</span>
+                  <span className="font-medium sm:hidden">Back</span>
                 </button>
               )}
               {/* Dark Mode Toggle */}
@@ -1226,28 +1227,28 @@ export default function DynamicHireView({
                 onClick={toggleDarkMode}
                 variant="outline"
                 size="sm"
-                className={`flex items-center gap-2 ${
+                className={`flex items-center gap-1 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm ${
                   isDarkMode
                     ? "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
                     : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 {isDarkMode ? (
-                  <Sun className="w-4 h-4" />
+                  <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 ) : (
-                  <Moon className="w-4 h-4" />
+                  <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 )}
                 <span className="hidden sm:inline">
                   {isDarkMode ? "Light" : "Dark"}
                 </span>
               </Button>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 sm:gap-3 flex-wrap justify-end">
               <ConnectionStatus />
               <div
                 className={`text-xs flex items-center gap-1 ${
                   isDarkMode ? "text-gray-400" : "text-gray-500"
-                }`}
+                } hidden sm:flex`}
               >
                 <Clock className="w-3 h-3" />
                 Last updated: {lastUpdated.toLocaleTimeString()}
@@ -1276,7 +1277,7 @@ export default function DynamicHireView({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
-          className="max-w-4xl mx-auto px-6 py-8 space-y-8"
+          className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8"
         >
           <ErrorBoundary
             fallback={
