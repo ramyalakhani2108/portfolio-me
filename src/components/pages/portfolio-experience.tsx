@@ -32,6 +32,8 @@ import {
 import { db } from "@/lib/db";
 import { useToast } from "@/components/ui/use-toast";
 import ChatWidget from "@/components/ui/chat-widget";
+import { CustomCursor } from "@/components/ui/custom-cursor";
+import { AvatarAssistant } from "@/components/ui/avatar-assistant";
 
 interface Skill {
   id: string;
@@ -167,6 +169,9 @@ export default function PortfolioExperience({
   const [roleIndex, setRoleIndex] = useState(0);
   const [heroReady, setHeroReady] = useState(false);
   const [hoveredNode, setHoveredNode] = useState<number | null>(null);
+  const [chatInitialOpen, setChatInitialOpen] = useState(false);
+  const [speakGreeting, setSpeakGreeting] = useState(false);
+  const [avatarDismissed, setAvatarDismissed] = useState(false);
   const buildPhrases = ["Scalable Systems", "High-performance Apps", "Intelligent Interfaces", "Full Stack Products"];
 
   useEffect(() => {
@@ -1515,8 +1520,30 @@ export default function PortfolioExperience({
         </div>
       </footer>
 
-      {/* Chat Widget */}
-      {profile && <ChatWidget profile={profile} />}
+      {/* Custom Premium Cursor */}
+      <CustomCursor />
+
+      {/* Avatar Assistant + Chat Widget */}
+      {profile && (
+        <>
+          {!avatarDismissed && (
+            <AvatarAssistant
+              onAccept={() => {
+                setAvatarDismissed(true);
+                setChatInitialOpen(true);
+                setSpeakGreeting(true);
+              }}
+              onDecline={() => setAvatarDismissed(true)}
+            />
+          )}
+          <ChatWidget
+            profile={profile}
+            initialOpen={chatInitialOpen}
+            speakGreeting={speakGreeting}
+            onSpeakGreetingDone={() => setSpeakGreeting(false)}
+          />
+        </>
+      )}
     </div>
   );
 }

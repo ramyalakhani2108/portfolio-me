@@ -16,6 +16,10 @@ import {
   ThumbsDown,
   Minimize2,
   Maximize2,
+  Volume2,
+  VolumeX,
+  Mic,
+  MicOff,
 } from "lucide-react";
 import { Button } from "./button";
 import { Input } from "./input";
@@ -48,6 +52,9 @@ interface Profile {
 interface ChatWidgetProps {
   profile: Profile;
   className?: string;
+  initialOpen?: boolean;
+  speakGreeting?: boolean;
+  onSpeakGreetingDone?: () => void;
 }
 
 interface Profile {
@@ -265,7 +272,7 @@ const SuggestedQuestions = ({
   );
 };
 
-export default function ChatWidget({ profile, className }: ChatWidgetProps) {
+export default function ChatWidget({ profile, className, initialOpen, speakGreeting, onSpeakGreetingDone }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -274,7 +281,12 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
   const [queryCount, setQueryCount] = useState(0);
   const [lastQueryTime, setLastQueryTime] = useState(0);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [voiceMode, setVoiceMode] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+  const finalTranscriptRef = useRef<string>('');
   const { toast } = useToast();
 
   const scrollToBottom = () => {
@@ -284,6 +296,120 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (initialOpen) setIsOpen(true);
+  }, [initialOpen]);
+
+  // Auto-enable voice mode and speak greeting when avatar accepts
+  useEffect(() => {
+    if (!speakGreeting) return;
+    setVoiceMode(true);
+    const greeting = `Hi there! I'm Ramya's AI portfolio assistant. Feel free to ask me anything about Ramya's skills, projects, or experience!`;
+    setTimeout(() => {
+      speakText(greeting);
+      onSpeakGreetingDone?.();
+    }, 900);
+  }, [speakGreeting]); // intentionally not depending on voiceMode
+
+  const speakText = (text: string) => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+
+    const doSpeak = (voices: SpeechSynthesisVoice[]) => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.92;
+      utterance.pitch = 1.05;
+      utterance.volume = 1;
+      // Prefer a natural-sounding en-US voice; fall back to any English, then any voice
+      const preferred =
+        voices.find(v => v.lang === 'en-US' && /samantha|zira|google us|karen|moira/i.test(v.name)) ||
+        voices.find(v => v.lang.startsWith('en-US')) ||
+        voices.find(v => v.lang.startsWith('en')) ||
+        voices[0];
+      if (preferred) utterance.voice = preferred;
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utterance);
+    };
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      doSpeak(voices);
+    } else {
+      // Chrome loads voices asynchronously — wait for the event
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.onvoiceschanged = null;
+        doSpeak(window.speechSynthesis.getVoices());
+      };
+      // Kick Chrome into loading voices
+      window.speechSynthesis.getVoices();
+    }
+  };
+
+  // Wrap speak so it respects voiceMode for AI responses
+  const speak = (text: string) => {
+    if (!voiceMode) return;
+    speakText(text);
+  };
+
+  const startListening = () => {
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) {
+      toast({ title: "Voice input not supported", description: "Try Chrome or Edge browser.", variant: "destructive" });
+      return;
+    }
+
+    // Stop any previous session and reset accumulated text
+    recognitionRef.current?.abort();
+    finalTranscriptRef.current = '';
+    setInput('');
+
+    const recognition = new SpeechRecognitionAPI();
+    recognition.continuous = true;        // keep listening until user clicks stop
+    recognition.interimResults = true;    // show words as they're spoken
+    recognition.lang = 'en-US';
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setIsListening(true);
+
+    recognition.onresult = (event: any) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscriptRef.current += result[0].transcript + ' ';
+        } else {
+          interim = result[0].transcript;
+        }
+      }
+      // final text + live interim preview
+      setInput((finalTranscriptRef.current + interim).trim());
+    };
+
+    recognition.onerror = (event: any) => {
+      // 'no-speech' is normal — just restart silently
+      if (event.error === 'no-speech') {
+        recognition.stop();
+        recognition.start();
+        return;
+      }
+      setIsListening(false);
+    };
+
+    // With continuous=true, onend fires only when we call stop() or an unrecoverable error
+    recognition.onend = () => setIsListening(false);
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const stopListening = () => {
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+    setIsListening(false);
+  };
 
   // Rate limiting check
   const checkRateLimit = (): boolean => {
@@ -403,6 +529,7 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
       setMessages((prev) => [...prev, botMessage]);
       setQueryCount((prev) => prev + 1);
       setLastQueryTime(Date.now());
+      if (voiceMode) speak(response);
     } catch (error) {
       console.error("Chat error:", error);
 
@@ -462,10 +589,31 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
                     <p className="text-[#F5F1E8]/60 text-xs flex items-center gap-1 truncate">
                       <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse flex-shrink-0"></span>
                       <span className="truncate">Online</span>
+                      {isSpeaking && (
+                        <div className="flex items-center gap-0.5 ml-1">
+                          {[0,1,2].map(i => (
+                            <div key={i} className={`w-0.5 bg-[#C6A86B] rounded-full animate-bounce`}
+                              style={{ height: `${6 + i * 3}px`, animationDelay: `${i * 0.1}s` }} />
+                          ))}
+                        </div>
+                      )}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => {
+                      setVoiceMode(!voiceMode);
+                      if (voiceMode) {
+                        window.speechSynthesis?.cancel();
+                        setIsSpeaking(false);
+                      }
+                    }}
+                    className="text-[#F5F1E8]/60 hover:text-[#F5F1E8] transition-colors p-1 rounded-full hover:bg-[#C6A86B]/10"
+                    title={voiceMode ? "Disable voice" : "Enable voice"}
+                  >
+                    {voiceMode ? <Volume2 className="w-4 h-4 text-[#C6A86B]" /> : <VolumeX className="w-4 h-4" />}
+                  </button>
                   <button
                     onClick={() => setIsMinimized(!isMinimized)}
                     className="text-[#F5F1E8]/60 hover:text-[#F5F1E8] transition-colors p-1 rounded-full hover:bg-[#C6A86B]/10"
@@ -549,6 +697,18 @@ export default function ChatWidget({ profile, className }: ChatWidgetProps) {
                     maxLength={500}
                     disabled={isLoading}
                   />
+                  <button
+                    type="button"
+                    onClick={isListening ? stopListening : startListening}
+                    className={`h-9 sm:h-10 w-9 sm:w-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
+                      isListening
+                        ? "bg-red-500 text-white animate-pulse"
+                        : "bg-[#1A1A1A] border border-[#222222] text-[#F5F1E8]/60 hover:text-[#C6A86B] hover:border-[#C6A86B]/30"
+                    }`}
+                    title={isListening ? "Stop listening" : "Speak your question"}
+                  >
+                    {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                  </button>
                   <Button
                     type="submit"
                     size="sm"
