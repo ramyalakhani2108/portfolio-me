@@ -114,10 +114,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   // Theme Builder State
   const [themeSettings, setThemeSettings] = useState({
-    primaryColor: "#8b5cf6",
-    secondaryColor: "#06b6d4",
-    accentColor: "#f59e0b",
-    darkMode: false,
+    primaryColor: "#C6A86B",
+    secondaryColor: "#9CA3AF",
+    accentColor: "#D4B87A",
+    darkMode: true,
     animationIntensity: 75,
     borderRadius: 12,
     fontFamily: "Inter",
@@ -1219,19 +1219,19 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-[#0B0B0C]">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-50">
+      <header className="bg-[#111111]/80 backdrop-blur-sm border-b border-[#222222] sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[#C6A86B] flex items-center justify-center">
               <Settings className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">
+              <h1 className="text-xl font-bold text-[#F5F1E8]">
                 Admin Dashboard
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[#9CA3AF]">
                 Portfolio Management System
               </p>
             </div>
@@ -1247,11 +1247,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               Refresh
             </Button>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Debug:</span>
+              <span className="text-sm text-[#9CA3AF]">Debug:</span>
               <Switch
                 checked={debugMode}
                 onCheckedChange={setDebugMode}
-                className="data-[state=checked]:bg-purple-600"
+                className="data-[state=checked]:bg-[#C6A86B]"
               />
             </div>
             <Button
@@ -1277,58 +1277,58 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           variants={itemVariants}
           className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
         >
-          <Card className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0">
+          <Card className="bg-[#111111] border-[#222222] text-[#F5F1E8]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-100 text-sm font-medium">
+                  <p className="text-[#9CA3AF] text-sm font-medium">
                     Total Visitors
                   </p>
                   <p className="text-3xl font-bold">{stats.totalVisitors}</p>
                 </div>
-                <Users className="w-8 h-8 text-blue-200" />
+                <Users className="w-8 h-8 text-[#C6A86B]" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+          <Card className="bg-[#111111] border-[#222222] text-[#F5F1E8]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-100 text-sm font-medium">
+                  <p className="text-[#9CA3AF] text-sm font-medium">
                     Employer Views
                   </p>
                   <p className="text-3xl font-bold">{stats.employerViews}</p>
                 </div>
-                <Eye className="w-8 h-8 text-purple-200" />
+                <Eye className="w-8 h-8 text-[#C6A86B]" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0">
+          <Card className="bg-[#111111] border-[#222222] text-[#F5F1E8]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-green-100 text-sm font-medium">
+                  <p className="text-[#9CA3AF] text-sm font-medium">
                     Portfolio Views
                   </p>
                   <p className="text-3xl font-bold">{stats.portfolioViews}</p>
                 </div>
-                <BarChart3 className="w-8 h-8 text-green-200" />
+                <BarChart3 className="w-8 h-8 text-[#C6A86B]" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-orange-500 to-red-500 text-white border-0">
+          <Card className="bg-[#111111] border-[#222222] text-[#F5F1E8]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-orange-100 text-sm font-medium">
+                  <p className="text-[#9CA3AF] text-sm font-medium">
                     Unread Messages
                   </p>
                   <p className="text-3xl font-bold">{stats.unreadMessages}</p>
                 </div>
-                <MessageSquare className="w-8 h-8 text-orange-200" />
+                <MessageSquare className="w-8 h-8 text-[#C6A86B]" />
               </div>
             </CardContent>
           </Card>
@@ -1435,12 +1435,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           </p>
                         </div>
                       </div>
-                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="p-3 bg-[#1A1A1A] rounded-lg border border-[#222222]">
                         <div className="text-center">
-                          <p className="text-sm font-medium text-blue-700">
+                          <p className="text-sm font-medium text-[#9CA3AF]">
                             Read
                           </p>
-                          <p className="text-xl font-bold text-blue-900">
+                          <p className="text-xl font-bold text-[#F5F1E8]">
                             {contacts.filter((c) => c.status === "read").length}
                           </p>
                         </div>
@@ -1458,12 +1458,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           </p>
                         </div>
                       </div>
-                      <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                      <div className="p-3 bg-[#1A1A1A] rounded-lg border border-[#222222]">
                         <div className="text-center">
-                          <p className="text-sm font-medium text-purple-700">
+                          <p className="text-sm font-medium text-[#C6A86B]">
                             Total
                           </p>
-                          <p className="text-xl font-bold text-purple-900">
+                          <p className="text-xl font-bold text-[#F5F1E8]">
                             {contacts.length}
                           </p>
                         </div>
@@ -1476,15 +1476,15 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         key={contact.id}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                        className="p-4 border border-[#222222] bg-[#111111] rounded-lg hover:shadow-md transition-shadow"
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-3">
                             <div>
-                              <h4 className="font-semibold text-gray-900">
+                              <h4 className="font-semibold text-[#F5F1E8]">
                                 {contact.name}
                               </h4>
-                              <p className="text-sm text-gray-500">
+                              <p className="text-sm text-[#9CA3AF]">
                                 {contact.email}
                               </p>
                             </div>
@@ -1523,7 +1523,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                               )}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-[#9CA3AF]">
                               {new Date(
                                 contact.created_at,
                               ).toLocaleDateString()}
@@ -1540,10 +1540,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <p className="font-medium text-gray-800">
+                          <p className="font-medium text-[#F5F1E8]">
                             {contact.subject}
                           </p>
-                          <p className="text-gray-600 text-sm leading-relaxed">
+                          <p className="text-[#9CA3AF] text-sm leading-relaxed">
                             {contact.message}
                           </p>
                           {contact.tags && contact.tags.length > 0 && (
@@ -1563,7 +1563,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       </motion.div>
                     ))}
                     {contacts.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="text-center py-8 text-[#9CA3AF]">
                         <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
                         <p>No messages yet</p>
                         <p className="text-sm mt-2">
@@ -1593,7 +1593,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     <div className="flex items-center justify-between">
                       <div>
                         <Label>Two-Factor Authentication</Label>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-[#9CA3AF]">
                           Add an extra layer of security
                         </p>
                       </div>
@@ -1623,7 +1623,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </div>
                     <div className="space-y-2">
                       <Label>Session Status</Label>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-[#9CA3AF]">
                         <p>
                           Last activity:{" "}
                           {new Date(lastActivity).toLocaleTimeString()}
@@ -1658,11 +1658,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         >
                           <div>
                             <p className="font-medium">Successful login</p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-[#9CA3AF]">
                               Chrome on Windows • 192.168.1.1
                             </p>
                           </div>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-[#9CA3AF]">
                             2 hours ago
                           </span>
                         </div>
@@ -1686,7 +1686,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <Label>Last Backup</Label>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[#9CA3AF]">
                         March 15, 2024 at 2:30 PM
                       </p>
                     </div>
@@ -1792,12 +1792,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         {contacts.slice(0, 5).map((contact) => (
                           <div
                             key={contact.id}
-                            className="p-4 border rounded-lg"
+                            className="p-4 border border-[#222222] bg-[#111111] rounded-lg"
                           >
                             <div className="flex justify-between items-start mb-2">
                               <div>
-                                <p className="font-medium">{contact.name}</p>
-                                <p className="text-sm text-gray-500">
+                                <p className="font-medium text-[#F5F1E8]">{contact.name}</p>
+                                <p className="text-sm text-[#9CA3AF]">
                                   {contact.email}
                                 </p>
                               </div>
@@ -1811,8 +1811,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                                 {contact.status}
                               </Badge>
                             </div>
-                            <p className="text-sm mb-2">{contact.subject}</p>
-                            <p className="text-xs text-gray-600">
+                            <p className="text-sm mb-2 text-[#F5F1E8]">{contact.subject}</p>
+                            <p className="text-xs text-[#9CA3AF]">
                               {contact.message.substring(0, 100)}...
                             </p>
                           </div>
@@ -1844,9 +1844,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       </div>
                       <div className="space-y-2">
                         <Label>Operation Logs</Label>
-                        <div className="h-64 overflow-y-auto bg-gray-50 p-3 rounded border text-xs font-mono">
+                        <div className="h-64 overflow-y-auto bg-[#0B0B0C] p-3 rounded border border-[#222222] text-xs font-mono text-[#9CA3AF]">
                           {operationLogs.length === 0 ? (
-                            <p className="text-gray-500">
+                            <p className="text-[#9CA3AF]">
                               No operations logged yet
                             </p>
                           ) : (
@@ -1913,7 +1913,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <Button
                         onClick={generateResumePDF}
                         disabled={isGeneratingResume}
-                        className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white flex items-center gap-2"
+                        className="bg-[#C6A86B] hover:bg-[#D4B87A] text-[#0B0B0C] flex items-center gap-2"
                       >
                         {isGeneratingResume ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -1924,7 +1924,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           ? "Generating AI-Enhanced Resume..."
                           : "Generate AI-Enhanced PDF Resume"}
                       </Button>
-                      <p className="text-sm text-gray-500 mt-2">
+                      <p className="text-sm text-[#9CA3AF] mt-2">
                         Generates an AI-enhanced professional PDF resume using
                         your portfolio data, LinkedIn profile analysis, and
                         GitHub profile scanning
@@ -1934,7 +1934,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <h4 className="font-medium mb-2">
                         AI-Enhanced Features:
                       </h4>
-                      <ul className="text-sm text-gray-600 space-y-1">
+                      <ul className="text-sm text-[#9CA3AF] space-y-1">
                         <li>• AI-enhanced professional summary</li>
                         <li>• LinkedIn profile analysis and integration</li>
                         <li>• GitHub repository and contribution analysis</li>
@@ -2090,7 +2090,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     <Button
                       onClick={saveResumeData}
                       disabled={isSavingResume}
-                      className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white"
+                      className="w-full bg-[#C6A86B] hover:bg-[#D4B87A] text-[#0B0B0C]"
                     >
                       {isSavingResume ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -63,68 +63,68 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#0B0B0C] flex items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="w-full max-w-md"
       >
-        <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
+        <Card className="bg-[#111111] border border-[#222222] shadow-2xl">
           <CardHeader className="text-center">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center"
+              className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#C6A86B] flex items-center justify-center"
             >
-              <Lock className="w-8 h-8 text-white" />
+              <Lock className="w-8 h-8 text-[#0B0B0C]" />
             </motion.div>
-            <CardTitle className="text-2xl font-bold text-white">
+            <CardTitle className="text-2xl font-bold text-[#F5F1E8]">
               Admin Access
             </CardTitle>
-            <p className="text-white/60 text-sm">
+            <p className="text-[#9CA3AF] text-sm">
               Enter your credentials to access the dashboard
             </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-white/80">
+                <Label htmlFor="username" className="text-[#F5F1E8]/80">
                   Username
                 </Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
                   <Input
                     id="username"
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-purple-400"
+                    className="pl-10 bg-[#1A1A1A] border-[#222222] text-[#F5F1E8] placeholder:text-[#9CA3AF] focus:border-[#C6A86B]"
                     placeholder="Enter username"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-white/80">
+                <Label htmlFor="password" className="text-[#F5F1E8]/80">
                   Password
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-purple-400"
+                    className="pl-10 pr-10 bg-[#1A1A1A] border-[#222222] text-[#F5F1E8] placeholder:text-[#9CA3AF] focus:border-[#C6A86B]"
                     placeholder="Enter your password"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#9CA3AF] hover:text-[#F5F1E8]/60"
                   >
                     {showPassword ? (
                       <EyeOff className="w-4 h-4" />
@@ -137,17 +137,17 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-medium py-2.5"
+                className="w-full bg-[#C6A86B] hover:bg-[#D4B87A] text-[#0B0B0C] font-medium py-2.5"
               >
                 {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-[#0B0B0C]/30 border-t-[#0B0B0C] rounded-full animate-spin" />
                 ) : (
                   "Sign In"
                 )}
               </Button>
             </form>
             <div className="mt-6 text-center">
-              <p className="text-xs text-white/40">
+              <p className="text-xs text-[#9CA3AF]">
                 Use the admin credentials to access the dashboard
               </p>
               <p className="text-xs text-white/30 mt-1">

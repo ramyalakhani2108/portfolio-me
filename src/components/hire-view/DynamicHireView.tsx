@@ -147,7 +147,7 @@ function ConnectionStatus() {
 // Loading Skeleton Components
 function SectionSkeleton() {
   return (
-    <Card className="shadow-lg border-blue-100">
+    <Card className="shadow-lg border-[#222222]">
       <CardHeader>
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 bg-gray-200 rounded animate-pulse" />
@@ -194,12 +194,12 @@ export default function DynamicHireView({
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [themeSettings, setThemeSettings] = useState<ThemeSettings>({
-    primaryColor: "#8b5cf6",
-    secondaryColor: "#06b6d4",
-    accentColor: "#f59e0b",
-    darkMode: false,
+    primaryColor: "#C6A86B",
+    secondaryColor: "#9CA3AF",
+    accentColor: "#D4B87A",
+    darkMode: true,
     animationIntensity: 75,
     borderRadius: 12,
     fontFamily: "Inter",
@@ -274,10 +274,10 @@ export default function DynamicHireView({
 
       if (themeData && !error) {
         const theme = {
-          primaryColor: themeData.primary_color || "#8b5cf6",
-          secondaryColor: themeData.secondary_color || "#06b6d4",
-          accentColor: themeData.accent_color || "#f59e0b",
-          darkMode: themeData.dark_mode || false,
+          primaryColor: themeData.primary_color || "#C6A86B",
+          secondaryColor: themeData.secondary_color || "#9CA3AF",
+          accentColor: themeData.accent_color || "#D4B87A",
+          darkMode: themeData.dark_mode || true,
           animationIntensity: themeData.animation_intensity || 75,
           borderRadius: themeData.border_radius || 12,
           fontFamily: themeData.font_family || "Inter",
@@ -584,7 +584,7 @@ export default function DynamicHireView({
         )}
       </div>
       <h1
-        className={`text-2xl sm:text-4xl font-bold ${isDarkMode ? "text-white" : "text-gray-900"}`}
+        className={`text-2xl sm:text-4xl font-bold ${isDarkMode ? "text-[#F5F1E8]" : "text-gray-900"}`}
         style={{ fontFamily: themeSettings.fontFamily }}
       >
         {section.content?.headline || profile?.full_name || "Professional Developer"}
@@ -597,13 +597,13 @@ export default function DynamicHireView({
       </p>
       {section.content?.bio || profile?.bio ? (
         <p
-          className={`text-sm sm:text-lg max-w-2xl mx-auto ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
+          className={`text-sm sm:text-lg max-w-2xl mx-auto ${isDarkMode ? "text-[#9CA3AF]" : "text-gray-600"}`}
         >
           {section.content?.bio || profile?.bio}
         </p>
       ) : null}
       <div
-        className={`flex flex-wrap justify-center gap-4 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
+        className={`flex flex-wrap justify-center gap-4 text-sm ${isDarkMode ? "text-[#9CA3AF]" : "text-gray-600"}`}
       >
         {/* Always show contact information for hire view */}
         <div className="flex items-center gap-1">
@@ -654,12 +654,12 @@ export default function DynamicHireView({
         transition={{ duration: 0.6, delay: 0.1 }}
       >
         <Card
-          className={`shadow-lg ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-blue-100"}`}
+          className={`shadow-lg ${isDarkMode ? "bg-[#111111] border-[#222222]" : "bg-white border-blue-100"}`}
           style={{ borderRadius: `${themeSettings.borderRadius}px` }}
         >
           <CardHeader>
             <CardTitle
-              className={`text-xl sm:text-2xl flex items-center gap-2 ${isDarkMode ? "text-white" : "text-gray-900"}`}
+              className={`text-xl sm:text-2xl flex items-center gap-2 ${isDarkMode ? "text-[#F5F1E8]" : "text-gray-900"}`}
               style={{ fontFamily: themeSettings.fontFamily }}
             >
               <Star
@@ -669,7 +669,7 @@ export default function DynamicHireView({
               {section.title || "Technical Skills"}
             </CardTitle>
             {section.content?.description && (
-              <p className={`text-sm sm:text-base ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+              <p className={`text-sm sm:text-base ${isDarkMode ? "text-[#9CA3AF]" : "text-gray-600"}`}>
                 {section.content.description}
               </p>
             )}
@@ -685,7 +685,7 @@ export default function DynamicHireView({
                 return (
                   <div key={category} className="space-y-3">
                     <h4
-                      className={`font-semibold text-lg ${isDarkMode ? "text-gray-200" : "text-gray-800"}`}
+                      className={`font-semibold text-lg ${isDarkMode ? "text-[#F5F1E8]" : "text-gray-800"}`}
                       style={{ color: themeSettings.secondaryColor }}
                     >
                       {category}
@@ -696,19 +696,19 @@ export default function DynamicHireView({
                           <div className="flex items-center justify-between">
                             <span
                               className={
-                                isDarkMode ? "text-gray-300" : "text-gray-700"
+                                isDarkMode ? "text-[#F5F1E8]" : "text-gray-700"
                               }
                             >
                               {skill.name}
                             </span>
                             <span
-                              className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
+                              className={`text-sm ${isDarkMode ? "text-[#9CA3AF]" : "text-gray-500"}`}
                             >
                               {skill.proficiency}%
                             </span>
                           </div>
                           <div
-                            className={`w-full h-2 rounded-full overflow-hidden ${isDarkMode ? "bg-gray-700" : "bg-gray-200"}`}
+                            className={`w-full h-2 rounded-full overflow-hidden ${isDarkMode ? "bg-[#222222]" : "bg-gray-200"}`}
                           >
                             <motion.div
                               className="h-full rounded-full"
@@ -734,7 +734,7 @@ export default function DynamicHireView({
             </div>
             {activeSkills.length === 0 && (
               <div
-                className={`text-center py-8 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
+                className={`text-center py-8 ${isDarkMode ? "text-[#9CA3AF]" : "text-gray-500"}`}
               >
                 <Star className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>Skills information is being updated</p>
@@ -759,12 +759,12 @@ export default function DynamicHireView({
         transition={{ duration: 0.6, delay: 0.2 }}
       >
         <Card
-          className={`shadow-lg ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-blue-100"}`}
+          className={`shadow-lg ${isDarkMode ? "bg-[#111111] border-[#222222]" : "bg-white border-blue-100"}`}
           style={{ borderRadius: `${themeSettings.borderRadius}px` }}
         >
           <CardHeader>
             <CardTitle
-              className={`text-2xl flex items-center gap-2 ${isDarkMode ? "text-white" : "text-gray-900"}`}
+              className={`text-2xl flex items-center gap-2 ${isDarkMode ? "text-[#F5F1E8]" : "text-gray-900"}`}
               style={{ fontFamily: themeSettings.fontFamily }}
             >
               <Calendar
@@ -774,7 +774,7 @@ export default function DynamicHireView({
               {section.title || "Professional Experience"}
             </CardTitle>
             {section.content?.description && (
-              <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>
+              <p className={isDarkMode ? "text-[#9CA3AF]" : "text-gray-600"}>
                 {section.content.description}
               </p>
             )}
@@ -797,13 +797,13 @@ export default function DynamicHireView({
                   <div className="space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <h4
-                        className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}
+                        className={`text-lg font-semibold ${isDarkMode ? "text-[#F5F1E8]" : "text-gray-900"}`}
                       >
                         {exp.position}
                       </h4>
                       <Badge
                         variant="secondary"
-                        className={`w-fit ${isDarkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-700"}`}
+                        className={`w-fit ${isDarkMode ? "bg-[#1A1A1A] text-[#9CA3AF]" : "bg-gray-100 text-gray-700"}`}
                       >
                         {new Date(exp.start_date).getFullYear()} -{" "}
                         {exp.is_current
@@ -819,28 +819,28 @@ export default function DynamicHireView({
                       </span>
                       <span
                         className={
-                          isDarkMode ? "text-gray-500" : "text-gray-400"
+                          isDarkMode ? "text-[#9CA3AF]" : "text-gray-400"
                         }
                       >
                         •
                       </span>
                       <span
                         className={
-                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                          isDarkMode ? "text-[#9CA3AF]" : "text-gray-600"
                         }
                       >
                         {exp.location}
                       </span>
                     </div>
                     <p
-                      className={`leading-relaxed ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
+                      className={`leading-relaxed ${isDarkMode ? "text-[#9CA3AF]" : "text-gray-700"}`}
                     >
                       {exp.description}
                     </p>
                     {exp.achievements && exp.achievements.length > 0 && (
                       <div className="mt-4">
                         <h5
-                          className={`text-sm font-semibold mb-2 ${isDarkMode ? "text-gray-200" : "text-gray-800"}`}
+                          className={`text-sm font-semibold mb-2 ${isDarkMode ? "text-[#F5F1E8]" : "text-gray-800"}`}
                           style={{ color: themeSettings.accentColor }}
                         >
                           Key Achievements:
@@ -851,7 +851,7 @@ export default function DynamicHireView({
                             .map((achievement, idx) => (
                               <li
                                 key={idx}
-                                className={`text-sm flex items-start gap-2 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
+                                className={`text-sm flex items-start gap-2 ${isDarkMode ? "text-[#9CA3AF]" : "text-gray-600"}`}
                               >
                                 <span
                                   className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
@@ -871,7 +871,7 @@ export default function DynamicHireView({
             </div>
             {activeExperiences.length === 0 && (
               <div
-                className={`text-center py-8 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
+                className={`text-center py-8 ${isDarkMode ? "text-[#9CA3AF]" : "text-gray-500"}`}
               >
                 <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>Experience information is being updated</p>
@@ -897,12 +897,12 @@ export default function DynamicHireView({
         id="contact-section"
       >
         <Card
-          className={`shadow-lg ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-blue-100"}`}
+          className={`shadow-lg ${isDarkMode ? "bg-[#111111] border-[#222222]" : "bg-white border-blue-100"}`}
           style={{ borderRadius: `${themeSettings.borderRadius}px` }}
         >
           <CardHeader>
             <CardTitle
-              className={`text-xl sm:text-2xl flex items-center gap-2 ${isDarkMode ? "text-white" : "text-gray-900"}`}
+              className={`text-xl sm:text-2xl flex items-center gap-2 ${isDarkMode ? "text-[#F5F1E8]" : "text-gray-900"}`}
               style={{ fontFamily: themeSettings.fontFamily }}
             >
               <Mail
@@ -912,7 +912,7 @@ export default function DynamicHireView({
               {section.title || "Let's Connect"}
             </CardTitle>
             {section.content?.description && (
-              <p className={`text-sm sm:text-base ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+              <p className={`text-sm sm:text-base ${isDarkMode ? "text-[#9CA3AF]" : "text-gray-600"}`}>
                 {section.content.description}
               </p>
             )}
@@ -929,11 +929,11 @@ export default function DynamicHireView({
                   style={{ color: themeSettings.accentColor }}
                 />
                 <h3
-                  className={`text-xl font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}
+                  className={`text-xl font-semibold ${isDarkMode ? "text-[#F5F1E8]" : "text-gray-900"}`}
                 >
                   Message Sent!
                 </h3>
-                <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>
+                <p className={isDarkMode ? "text-[#9CA3AF]" : "text-gray-600"}>
                   {section.content?.success_message ||
                     "Thank you for reaching out. I'll get back to you within 24 hours."}
                 </p>
@@ -948,7 +948,7 @@ export default function DynamicHireView({
                     return (
                       <div key={field.id} className={`space-y-2 ${colSpan}`}>
                         <label
-                          className={`text-xs sm:text-sm font-medium ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
+                          className={`text-xs sm:text-sm font-medium ${isDarkMode ? "text-[#F5F1E8]" : "text-gray-700"}`}
                         >
                           {field.label} {field.is_required && "*"}
                         </label>
@@ -963,7 +963,7 @@ export default function DynamicHireView({
                                 [field.id]: e.target.value,
                               })
                             }
-                            className={`text-sm ${isDarkMode ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400" : "bg-white border-blue-200"} focus:border-opacity-100`}
+                            className={`text-sm ${isDarkMode ? "bg-[#1A1A1A] border-[#222222] text-[#F5F1E8] placeholder-[#9CA3AF]" : "bg-white border-blue-200"} focus:border-opacity-100`}
                             style={{
                               borderColor: `${themeSettings.primaryColor}40`,
                               "--tw-ring-color": themeSettings.primaryColor,
@@ -981,7 +981,7 @@ export default function DynamicHireView({
                                 [field.id]: e.target.value,
                               })
                             }
-                            className={`${isDarkMode ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400" : "bg-white border-blue-200"} focus:border-opacity-100`}
+                            className={`${isDarkMode ? "bg-[#1A1A1A] border-[#222222] text-[#F5F1E8] placeholder-[#9CA3AF]" : "bg-white border-blue-200"} focus:border-opacity-100`}
                             style={{
                               borderColor: `${themeSettings.primaryColor}40`,
                               "--tw-ring-color": themeSettings.primaryColor,
@@ -1014,7 +1014,7 @@ export default function DynamicHireView({
                   </Button>
                 ) : (
                   <div
-                    className={`text-center py-8 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
+                    className={`text-center py-8 ${isDarkMode ? "text-[#9CA3AF]" : "text-gray-500"}`}
                   >
                     <Mail className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>Contact form is being configured</p>
@@ -1037,12 +1037,12 @@ export default function DynamicHireView({
       className="text-center"
     >
       <Card
-        className={`shadow-lg ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-blue-100"}`}
+        className={`shadow-lg ${isDarkMode ? "bg-[#111111] border-[#222222]" : "bg-white border-blue-100"}`}
         style={{ borderRadius: `${themeSettings.borderRadius}px` }}
       >
         <CardContent className="p-8">
           <h3
-            className={`text-xl font-semibold mb-6 ${isDarkMode ? "text-white" : "text-gray-900"}`}
+            className={`text-xl font-semibold mb-6 ${isDarkMode ? "text-[#F5F1E8]" : "text-gray-900"}`}
             style={{ fontFamily: themeSettings.fontFamily }}
           >
             {section.title || "Download Resume"}
@@ -1062,7 +1062,7 @@ export default function DynamicHireView({
               variant="outline"
               className={`w-full flex items-center gap-2 ${
                 isDarkMode
-                  ? "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                  ? "bg-[#1A1A1A] border-[#222222] text-[#9CA3AF] hover:bg-[#222222]"
                   : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
               }`}
             >
@@ -1091,15 +1091,15 @@ export default function DynamicHireView({
           </div>
 
           <div
-            className={`mt-6 p-4 rounded-lg ${isDarkMode ? "bg-gray-700" : "bg-blue-50"}`}
+            className={`mt-6 p-4 rounded-lg ${isDarkMode ? "bg-[#1A1A1A]" : "bg-blue-50"}`}
           >
             <h4
-              className={`font-medium mb-2 ${isDarkMode ? "text-gray-200" : "text-blue-900"}`}
+              className={`font-medium mb-2 ${isDarkMode ? "text-[#F5F1E8]" : "text-blue-900"}`}
             >
               Resume Options:
             </h4>
             <ul
-              className={`text-sm space-y-1 ${isDarkMode ? "text-gray-300" : "text-blue-700"}`}
+              className={`text-sm space-y-1 ${isDarkMode ? "text-[#9CA3AF]" : "text-blue-700"}`}
             >
               <li>• <strong>Standard Resume:</strong> Pre-built professional resume</li>
               <li>• <strong>Enhanced AI Resume:</strong> AI-powered with LinkedIn integration</li>
@@ -1110,7 +1110,7 @@ export default function DynamicHireView({
 
           {(section.content?.version || section.content?.last_updated) && (
             <p
-              className={`text-sm mt-4 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
+              className={`text-sm mt-4 ${isDarkMode ? "text-[#9CA3AF]" : "text-gray-500"}`}
             >
               {section.content?.version && `Version ${section.content.version}`}
               {section.content?.version &&
@@ -1128,7 +1128,7 @@ export default function DynamicHireView({
   // Error state with retry option
   if (error && !isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#0B0B0C] flex items-center justify-center p-6">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
@@ -1168,8 +1168,8 @@ export default function DynamicHireView({
   // Loading state with skeletons
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <header className="bg-white/80 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-50">
+      <div className="min-h-screen bg-[#0B0B0C]">
+        <header className="bg-[#111111]/80 backdrop-blur-sm border-b border-[#222222] sticky top-0 z-50">
           <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
             <div className="w-32 h-6 bg-gray-200 rounded animate-pulse" />
             <div className="w-24 h-6 bg-gray-200 rounded animate-pulse" />
@@ -1191,10 +1191,10 @@ export default function DynamicHireView({
       onBack={onBackToLanding}
     >
       <div
-        className={`min-h-screen transition-colors duration-300 ${isDarkMode ? "bg-gradient-to-br from-gray-900 to-gray-800" : "bg-gradient-to-br from-slate-50 to-blue-50"}`}
+        className={`min-h-screen transition-colors duration-300 ${isDarkMode ? "bg-[#0B0B0C]" : "bg-gradient-to-br from-slate-50 to-blue-50"}`}
         style={{
           background: isDarkMode
-            ? `linear-gradient(135deg, #1f2937, #111827)`
+            ? `#0B0B0C`
             : `linear-gradient(135deg, #f8fafc, #dbeafe)`,
         }}
       >
@@ -1202,7 +1202,7 @@ export default function DynamicHireView({
         <header
           className={`backdrop-blur-sm border-b sticky top-0 z-50 transition-colors duration-300 ${
             isDarkMode
-              ? "bg-gray-800/80 border-gray-700"
+              ? "bg-[#111111]/80 border-[#222222]"
               : "bg-white/80 border-blue-100"
           }`}
         >
@@ -1213,7 +1213,7 @@ export default function DynamicHireView({
                   onClick={onBackToLanding}
                   className={`flex items-center gap-1 sm:gap-2 transition-colors text-xs sm:text-base ${
                     isDarkMode
-                      ? "text-blue-400 hover:text-blue-300"
+                      ? "text-[#C6A86B] hover:text-[#D4B87A]"
                       : "text-blue-600 hover:text-blue-700"
                   }`}
                 >
@@ -1229,7 +1229,7 @@ export default function DynamicHireView({
                 size="sm"
                 className={`flex items-center gap-1 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm ${
                   isDarkMode
-                    ? "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                    ? "bg-[#1A1A1A] border-[#222222] text-[#9CA3AF] hover:bg-[#222222]"
                     : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >
@@ -1247,7 +1247,7 @@ export default function DynamicHireView({
               <ConnectionStatus />
               <div
                 className={`text-xs flex items-center gap-1 ${
-                  isDarkMode ? "text-gray-400" : "text-gray-500"
+                  isDarkMode ? "text-[#9CA3AF]" : "text-gray-500"
                 } hidden sm:flex`}
               >
                 <Clock className="w-3 h-3" />
@@ -1259,7 +1259,7 @@ export default function DynamicHireView({
                 size="sm"
                 className={`flex items-center gap-2 ${
                   isDarkMode
-                    ? "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                    ? "bg-[#1A1A1A] border-[#222222] text-[#9CA3AF] hover:bg-[#222222]"
                     : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
                 disabled={isLoading}
@@ -1311,13 +1311,13 @@ export default function DynamicHireView({
                   exit={{ opacity: 0, y: -20 }}
                   className="text-center py-16"
                 >
-                  <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-blue-100 flex items-center justify-center">
-                    <Star className="w-12 h-12 text-blue-500" />
+                  <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-[#1A1A1A] flex items-center justify-center">
+                    <Star className="w-12 h-12 text-[#C6A86B]" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  <h3 className="text-xl font-semibold text-[#F5F1E8] mb-2">
                     No Content Available
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-[#9CA3AF] mb-6">
                     The hire view content is being set up. Please check back
                     soon.
                   </p>
@@ -1359,7 +1359,7 @@ export default function DynamicHireView({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className={`text-center text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
+            className={`text-center text-sm ${isDarkMode ? "text-[#9CA3AF]" : "text-gray-500"}`}
           >
             <p>© 2024 Ramya Lakhani. Available for new opportunities.</p>
             <p className="mt-2 flex items-center justify-center gap-2">

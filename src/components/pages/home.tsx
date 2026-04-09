@@ -108,7 +108,7 @@ export default function LandingPage() {
             },
           },
           color: {
-            value: ["#8b5cf6", "#06b6d4", "#f59e0b", "#ec4899"],
+            value: ["#C6A86B", "#D4B87A", "#9CA3AF", "#E8D9B5"],
           },
           shape: {
             type: "circle",
@@ -223,7 +223,7 @@ export default function LandingPage() {
           experience: profileData.experience,
           status: profileData.status,
         };
-        
+
         setAllProfiles([profile]);
         setProfile(profile);
         console.log("✅ Active profile loaded from PostgreSQL API:", profile);
@@ -349,14 +349,14 @@ export default function LandingPage() {
   return (
     <div
       ref={containerRef}
-      className="min-h-screen relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-y-auto"
+      className="min-h-screen relative bg-[#0B0B0C] overflow-hidden"
     >
       {/* Cursor Following Light Spot - Hidden on mobile */}
       <motion.div
         className="fixed w-64 h-64 rounded-full pointer-events-none z-10 hidden sm:block"
         style={{
           background:
-            "radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 50%, transparent 70%)",
+            "radial-gradient(circle, rgba(198, 168, 107, 0.08) 0%, rgba(198, 168, 107, 0.03) 50%, transparent 70%)",
           x: mouseX,
           y: mouseY,
           translateX: "-50%",
@@ -374,20 +374,20 @@ export default function LandingPage() {
       />
 
       {/* Dynamic Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-blue-900/30 to-indigo-900/20">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-purple-500/3 to-transparent" />
+      <div className="absolute inset-0 bg-[#0B0B0C]/60">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-transparent to-transparent" />
       </div>
 
       {/* Main Content */}
-      <main className="relative z-20 w-full px-4 sm:px-6 py-8 sm:py-12 lg:py-0 lg:min-h-screen lg:flex lg:items-center lg:justify-center">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 max-w-7xl mx-auto w-full lg:items-center">
+      <main className="relative z-20 w-full px-4 sm:px-6 py-8 sm:py-12 lg:py-8 lg:h-screen lg:flex lg:items-center lg:justify-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 max-w-7xl mx-auto w-full lg:h-full">
           {/* Profile Section */}
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="lg:col-span-5 text-center lg:text-left"
-            style={{ y: textY, willChange: "transform" }}
+            className="lg:col-span-5 text-center lg:text-left flex flex-col justify-center"
+            style={{ willChange: "transform" }}
           >
             {/* 3D Profile Card with Flip Effect */}
             <motion.div
@@ -404,10 +404,10 @@ export default function LandingPage() {
               >
                 {/* Front of card */}
                 <div
-                  className="absolute inset-0 w-full h-full rounded-full bg-gradient-to-br from-purple-500 via-cyan-500 to-pink-500 p-1 shadow-2xl"
+                  className="absolute inset-0 w-full h-full rounded-full bg-gradient-to-br from-[#C6A86B] via-[#D4B87A] to-[#9CA3AF] p-1 shadow-2xl"
                   style={{ backfaceVisibility: "hidden" }}
                 >
-                  <div className="w-full h-full rounded-full bg-gradient-to-br from-slate-900 to-purple-900 flex items-center justify-center text-white text-4xl lg:text-5xl font-bold overflow-hidden">
+                  <div className="w-full h-full rounded-full bg-[#0B0B0C] flex items-center justify-center text-white text-4xl lg:text-5xl font-bold overflow-hidden">
                     <img
                       src={profile?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80"}
                       alt={profile?.full_name || "Profile Avatar"}
@@ -422,13 +422,13 @@ export default function LandingPage() {
                 </div>
                 {/* Back of card */}
                 <div
-                  className="absolute inset-0 w-full h-full rounded-full bg-gradient-to-br from-cyan-500 via-purple-500 to-pink-500 p-1 shadow-2xl"
+                  className="absolute inset-0 w-full h-full rounded-full bg-gradient-to-br from-[#C6A86B] via-[#D4B87A] to-[#9CA3AF] p-1 shadow-2xl"
                   style={{
                     backfaceVisibility: "hidden",
                     transform: "rotateY(180deg)",
                   }}
                 >
-                  <div className="w-full h-full rounded-full bg-gradient-to-br from-slate-900 to-cyan-900 flex flex-col items-center justify-center text-white p-4">
+                  <div className="w-full h-full rounded-full bg-gradient-to-br from-[#0B0B0C] to-[#111111] flex flex-col items-center justify-center text-white p-4">
                     <Code className="w-8 h-8 mb-2" />
                     <span className="text-xs font-semibold">Full Stack</span>
                     <span className="text-xs">Developer</span>
@@ -442,26 +442,26 @@ export default function LandingPage() {
               <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-white mb-3 sm:mb-4 leading-tight">
                 {profile?.full_name || "Ramya Lakhani"}
               </h1>
-              <p className="text-lg sm:text-xl lg:text-2xl text-cyan-300 font-medium mb-3 sm:mb-4">
+              <p className="text-lg sm:text-xl lg:text-2xl text-[#C6A86B] font-medium mb-3 sm:mb-4">
                 {profile?.role || "Full-Stack Developer"}
               </p>
-              <p className="text-sm sm:text-base text-gray-300 leading-relaxed max-w-lg mx-auto lg:mx-0">
+              <p className="text-sm sm:text-base text-[#9CA3AF] leading-relaxed max-w-lg mx-auto lg:mx-0">
                 {profile?.bio ||
                   "Passionate developer creating amazing digital experiences with modern technologies."}
               </p>
-              
+
               {/* Additional Profile Details */}
               <div className="flex flex-wrap gap-2 sm:gap-3 mt-4 sm:mt-6 justify-center lg:justify-start">
                 {profile?.experience && (
-                  <div className="px-3 sm:px-4 py-2 bg-cyan-500/20 backdrop-blur-sm rounded-full border border-cyan-400/40">
-                    <p className="text-xs sm:text-sm text-cyan-300">
+                  <div className="px-3 sm:px-4 py-2 bg-[#C6A86B]/10 backdrop-blur-sm rounded-full border border-[#C6A86B]/30">
+                    <p className="text-xs sm:text-sm text-[#C6A86B]">
                       📅 {profile.experience}
                     </p>
                   </div>
                 )}
                 {profile?.status && (
-                  <div className="px-3 sm:px-4 py-2 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-400/40">
-                    <p className="text-xs sm:text-sm text-purple-300">
+                  <div className="px-3 sm:px-4 py-2 bg-white/5 backdrop-blur-sm rounded-full border border-white/10">
+                    <p className="text-xs sm:text-sm text-[#9CA3AF]">
                       ✨ {profile.status}
                     </p>
                   </div>
@@ -475,7 +475,7 @@ export default function LandingPage() {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="lg:col-span-7"
+            className="lg:col-span-7 self-center"
           >
             {/* Enhanced Glass morphism container */}
             <motion.div
@@ -483,8 +483,8 @@ export default function LandingPage() {
               className="backdrop-blur-2xl bg-gradient-to-br from-white/10 to-white/5 rounded-2xl p-6 sm:p-8 lg:p-12 border border-white/20 shadow-xl relative overflow-hidden"
             >
               {/* Animated background elements */}
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded-2xl"></div>
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 opacity-60 rounded-t-2xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-[#C6A86B]/5 via-[#C6A86B]/3 to-[#9CA3AF]/5 rounded-2xl"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-[#C6A86B] opacity-60 rounded-t-2xl"></div>
 
               <div className="relative z-10">
                 {/* Staggered Text Animation */}
@@ -519,18 +519,7 @@ export default function LandingPage() {
                   variants={itemVariants}
                 >
                   <motion.span
-                    className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
-                    animate={{
-                      backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                    }}
-                    transition={{
-                      duration: 4,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                    style={{
-                      backgroundSize: "200% 200%",
-                    }}
+                    className="text-[#C6A86B]"
                   >
                     Journey
                   </motion.span>
@@ -543,15 +532,15 @@ export default function LandingPage() {
                   Two distinct experiences crafted for different perspectives.
                   <br className="hidden lg:block" />
                   <motion.span
-                    className="text-cyan-300 font-semibold"
-                    whileHover={{ scale: 1.05, color: "#67e8f9" }}
+                    className="text-[#C6A86B] font-semibold"
+                    whileHover={{ scale: 1.05 }}
                   >
                     Are you here to hire?
                   </motion.span>{" "}
                   Or{" "}
                   <motion.span
-                    className="text-purple-300 font-semibold"
-                    whileHover={{ scale: 1.05, color: "#c084fc" }}
+                    className="text-[#9CA3AF] font-semibold"
+                    whileHover={{ scale: 1.05 }}
                   >
                     here to explore?
                   </motion.span>
@@ -566,7 +555,7 @@ export default function LandingPage() {
                     whileTap="tap"
                     onClick={() => handleFlowSelection("employer")}
                     disabled={isLoading}
-                    className="group relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-blue-500/15 to-cyan-500/15 hover:from-blue-500/25 hover:to-cyan-500/25 border border-white/20 hover:border-cyan-400/40 rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-[#C6A86B]/10 to-[#C6A86B]/5 hover:from-[#C6A86B]/20 hover:to-[#C6A86B]/15 border border-[#222222] hover:border-[#C6A86B]/40 rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:shadow-xl hover:shadow-[#C6A86B]/10 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="relative z-10">
                       <motion.div
@@ -577,19 +566,19 @@ export default function LandingPage() {
                           transition: { duration: 0.4 },
                         }}
                       >
-                        <Briefcase className="w-10 sm:w-12 h-10 sm:h-12 text-cyan-400 mx-auto" />
+                        <Briefcase className="w-10 sm:w-12 h-10 sm:h-12 text-[#C6A86B] mx-auto" />
                       </motion.div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3 group-hover:text-cyan-100 transition-colors">
+                      <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3 group-hover:text-[#F5F1E8] transition-colors">
                         I'm Here to Hire
                       </h3>
                       <p className="text-white/70 text-xs sm:text-sm leading-relaxed group-hover:text-white/90 transition-colors">
-                        <strong className="text-cyan-300">
+                        <strong className="text-[#C6A86B]">
                           Streamlined resume experience
                         </strong>
                         <br />
                         Timeline • Skills Matrix • Direct Contact
                       </p>
-                      <div className="mt-3 sm:mt-4 text-xs text-cyan-300/80 group-hover:text-cyan-300 transition-colors">
+                      <div className="mt-3 sm:mt-4 text-xs text-[#C6A86B]/80 group-hover:text-[#C6A86B] transition-colors">
                         ⚡ Quick overview • 📊 Skills assessment • 📞 Easy
                         contact
                       </div>
@@ -603,7 +592,7 @@ export default function LandingPage() {
                     whileTap="tap"
                     onClick={() => handleFlowSelection("viewer")}
                     disabled={isLoading}
-                    className="group relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-purple-500/15 to-pink-500/15 hover:from-purple-500/25 hover:to-pink-500/25 border border-white/20 hover:border-purple-400/40 rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-white/5 to-white/3 hover:from-white/10 hover:to-white/7 border border-[#222222] hover:border-[#9CA3AF]/40 rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:shadow-xl hover:shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="relative z-10">
                       <motion.div
@@ -614,19 +603,19 @@ export default function LandingPage() {
                           transition: { duration: 0.4 },
                         }}
                       >
-                        <FolderOpen className="w-10 sm:w-12 h-10 sm:h-12 text-pink-400 mx-auto" />
+                        <FolderOpen className="w-10 sm:w-12 h-10 sm:h-12 text-[#9CA3AF] mx-auto" />
                       </motion.div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3 group-hover:text-purple-100 transition-colors">
+                      <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3 group-hover:text-[#F5F1E8] transition-colors">
                         I'm Here to Explore
                       </h3>
                       <p className="text-white/70 text-xs sm:text-sm leading-relaxed group-hover:text-white/90 transition-colors">
-                        <strong className="text-purple-300">
+                        <strong className="text-[#9CA3AF]">
                           Full creative experience
                         </strong>
                         <br />
                         3D Animations • Project Showcases • Blog
                       </p>
-                      <div className="mt-3 sm:mt-4 text-xs text-purple-300/80 group-hover:text-purple-300 transition-colors">
+                      <div className="mt-3 sm:mt-4 text-xs text-[#9CA3AF]/80 group-hover:text-[#9CA3AF] transition-colors">
                         🎨 Interactive demos • 🚀 3D experiences • 📝 Insights
                       </div>
                     </div>
@@ -642,7 +631,7 @@ export default function LandingPage() {
                       exit={{ opacity: 0, y: -20 }}
                       className="mt-6 sm:mt-8 flex items-center justify-center gap-3 text-white/80"
                     >
-                      <div className="w-6 h-6 border-2 border-white/30 border-t-cyan-400 rounded-full animate-spin"></div>
+                      <div className="w-6 h-6 border-2 border-white/30 border-t-[#C6A86B] rounded-full animate-spin"></div>
                       <span className="text-base sm:text-lg">
                         Preparing your experience...
                       </span>
@@ -656,7 +645,7 @@ export default function LandingPage() {
                   className="mt-6 sm:mt-8 text-white/60 text-xs sm:text-sm"
                 >
                   <p className="mb-2">
-                    <span className="text-cyan-300">💡 Pro tip:</span> Both
+                    <span className="text-[#C6A86B]">💡 Pro tip:</span> Both
                     paths lead to the same destination with different journeys.
                   </p>
                   <p className="text-xs text-white/40">
@@ -677,10 +666,10 @@ export default function LandingPage() {
       {profile && <ChatWidget profile={profile as any} />}
 
       {/* Floating elements for extra visual appeal - Hidden on mobile */}
-      <div className="absolute top-20 left-10 w-2 h-2 bg-cyan-400 rounded-full animate-pulse opacity-40 hidden sm:block"></div>
-      <div className="absolute top-40 right-20 w-1 h-1 bg-purple-400 rounded-full animate-pulse opacity-30 delay-1000 hidden sm:block"></div>
-      <div className="absolute bottom-32 left-20 w-3 h-3 bg-pink-400 rounded-full animate-pulse opacity-35 delay-2000 hidden sm:block"></div>
-      <div className="absolute bottom-40 right-32 w-1.5 h-1.5 bg-cyan-300 rounded-full animate-pulse opacity-25 delay-3000 hidden sm:block"></div>
+      <div className="absolute top-20 left-10 w-2 h-2 bg-[#C6A86B] rounded-full animate-pulse opacity-40 hidden sm:block"></div>
+      <div className="absolute top-40 right-20 w-1 h-1 bg-[#9CA3AF] rounded-full animate-pulse opacity-30 delay-1000 hidden sm:block"></div>
+      <div className="absolute bottom-32 left-20 w-3 h-3 bg-[#D4B87A] rounded-full animate-pulse opacity-35 delay-2000 hidden sm:block"></div>
+      <div className="absolute bottom-40 right-32 w-1.5 h-1.5 bg-[#E8D9B5] rounded-full animate-pulse opacity-25 delay-3000 hidden sm:block"></div>
     </div>
   );
 }
