@@ -312,19 +312,33 @@ export default function ChatWidget({ profile, className, initialOpen, speakGreet
     }, 900);
   }, [speakGreeting]); // intentionally not depending on voiceMode
 
+  const phonetic = (text: string): string =>
+    text
+      // possessive must come first so the apostrophe doesn't merge into the vowel
+      .replace(/Ramya\s+Lakhani's/gi, "Rum-yah Laakhaani's")
+      .replace(/Ramya\s+Lakhani/gi, 'Rum-yah Laakhaani')
+      .replace(/Ramya's/gi, "Rum-yah's")
+      .replace(/Ramya/gi, 'Rum-yah')
+      .replace(/Lakhani's/gi, "Laakhaani's")
+      .replace(/Lakhani/gi, 'Laakhaani');
+
   const speakText = (text: string) => {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
 
     const doSpeak = (voices: SpeechSynthesisVoice[]) => {
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(phonetic(text));
       utterance.rate = 0.92;
       utterance.pitch = 1.05;
       utterance.volume = 1;
       // Prefer a natural-sounding en-US voice; fall back to any English, then any voice
+      // Prefer a natural-sounding male English voice
       const preferred =
-        voices.find(v => v.lang === 'en-US' && /samantha|zira|google us|karen|moira/i.test(v.name)) ||
-        voices.find(v => v.lang.startsWith('en-US')) ||
+        voices.find(v => /google uk english male/i.test(v.name)) ||
+        voices.find(v => /microsoft david|microsoft mark|microsoft guy/i.test(v.name)) ||
+        voices.find(v => /^alex$|^daniel$|^oliver$|^fred$/i.test(v.name)) ||
+        voices.find(v => v.lang.startsWith('en') && /male/i.test(v.name)) ||
+        voices.find(v => v.lang.startsWith('en-US') && !/female|samantha|zira|victoria|karen|moira|susan|linda/i.test(v.name)) ||
         voices.find(v => v.lang.startsWith('en')) ||
         voices[0];
       if (preferred) utterance.voice = preferred;
