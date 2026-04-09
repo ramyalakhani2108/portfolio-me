@@ -50,6 +50,17 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        'deep-black': '#0B0B0C',
+        'dark-surface': '#111111',
+        'dark-elevated': '#1A1A1A',
+        'warm-white': '#F5F1E8',
+        'gold': {
+          DEFAULT: '#C6A86B',
+          light: '#D4B87A',
+          dim: 'rgba(198, 168, 107, 0.2)',
+        },
+        'soft-gray': '#9CA3AF',
+        'dark-border': '#222222',
       },
       borderRadius: {
         lg: "var(--radius)",
