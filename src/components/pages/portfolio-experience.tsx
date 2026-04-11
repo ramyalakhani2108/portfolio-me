@@ -136,6 +136,7 @@ export default function PortfolioExperience({
 }: PortfolioExperienceProps = {}) {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem("portfolioTheme");
+    if (saved === null) return true; // default dark
     return saved === "dark";
   });
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -397,8 +398,8 @@ export default function PortfolioExperience({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 backdrop-blur-xl rounded-full px-6 py-3
-              flex items-center gap-6 shadow-2xl border
+            className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 backdrop-blur-xl rounded-full px-4 sm:px-6 py-3
+              flex items-center gap-3 sm:gap-6 shadow-2xl border
               ${isDarkMode
                 ? "bg-[#111111]/90 border-[#222222]"
                 : "bg-white/90 border-gray-200"
@@ -406,17 +407,17 @@ export default function PortfolioExperience({
           >
             <button
               onClick={onBackToLanding}
-              className="flex items-center gap-1.5 text-[#C6A86B] hover:text-[#D4B87A] transition-colors mr-2"
+              className="flex items-center gap-1.5 text-[#C6A86B] hover:text-[#D4B87A] transition-colors mr-1 sm:mr-2"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium">Back</span>
+              <span className="text-sm font-medium hidden sm:inline">Back</span>
             </button>
 
             {["About", "Skills", "Projects", "Blog", "Contact"].map((item) => (
               <button
                 key={item}
                 onClick={() => scrollToSection(item.toLowerCase())}
-                className={`relative text-sm font-medium transition-colors flex items-center gap-1.5
+                className={`relative text-xs sm:text-sm font-medium transition-colors hidden sm:flex items-center gap-1.5
                   ${activeSection === item.toLowerCase()
                     ? "text-[#C6A86B]"
                     : isDarkMode
@@ -434,7 +435,10 @@ export default function PortfolioExperience({
               </button>
             ))}
 
-            <div className={`flex items-center gap-2 ml-2 pl-2 border-l ${isDarkMode ? "border-[#222222]" : "border-gray-200"}`}>
+            {/* Mobile: show only active section label */}
+            <span className="sm:hidden text-xs font-medium text-[#C6A86B] capitalize">{activeSection}</span>
+
+            <div className={`flex items-center gap-2 ml-1 sm:ml-2 pl-2 border-l ${isDarkMode ? "border-[#222222]" : "border-gray-200"}`}>
               <Sun className={`w-3.5 h-3.5 ${isDarkMode ? "text-[#9CA3AF]" : "text-yellow-500"}`} />
               <Switch
                 checked={isDarkMode}
@@ -491,7 +495,7 @@ export default function PortfolioExperience({
 
           {/* Top status bar */}
           <motion.div
-            className="flex items-center justify-center gap-6 mb-6 text-xs font-mono"
+            className="flex items-center justify-center gap-3 sm:gap-6 mb-6 text-[10px] sm:text-xs font-mono flex-wrap"
             initial={{ opacity: 0, y: -10 }}
             animate={heroReady ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.2, duration: 0.5 }}
@@ -523,16 +527,30 @@ export default function PortfolioExperience({
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 exit={{ opacity: 0, y: -20, filter: "blur(6px)" }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-[#C6A86B] via-[#D4B87A] to-[#C6A86B] bg-clip-text text-transparent"
+                className="text-3xl sm:text-5xl md:text-7xl font-bold bg-gradient-to-r from-[#C6A86B] via-[#D4B87A] to-[#C6A86B] bg-clip-text text-transparent"
               >
                 {buildPhrases[roleIndex]}
               </motion.h1>
             </AnimatePresence>
           </motion.div>
 
-          {/* System Core — rings + avatar + orbit nodes */}
+          {/* Mobile orbit nodes — simple grid for small screens */}
+          <div className="flex sm:hidden flex-wrap justify-center gap-2 mb-6">
+            {ORBIT_NODES.map((node) => (
+              <div
+                key={node.label}
+                className={`rounded-xl px-3 py-2 text-xs font-mono border
+                  ${isDarkMode ? "bg-[#111111] border-[#222222] text-[#9CA3AF]" : "bg-white border-gray-200 text-gray-500"}`}
+              >
+                <span className="text-[#C6A86B] font-medium">{node.label}</span>
+                <p className="text-[10px] mt-0.5 opacity-70">{node.detail}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* System Core — rings + avatar + orbit nodes (desktop only) */}
           <div
-            className="relative flex items-center justify-center"
+            className="relative hidden sm:flex items-center justify-center"
             style={{ width: 480, height: 480, overflow: "visible" }}
             onMouseEnter={() => setIsPanelHovered(true)}
             onMouseLeave={() => setIsPanelHovered(false)}
@@ -727,7 +745,7 @@ export default function PortfolioExperience({
 
           {/* CTA row */}
           <motion.div
-            className="flex items-center gap-4 mt-10 z-20"
+            className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mt-6 sm:mt-10 z-20 w-full sm:w-auto px-4 sm:px-0"
             initial={{ opacity: 0, y: 20 }}
             animate={heroReady ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 2.5, duration: 0.5 }}
@@ -755,7 +773,7 @@ export default function PortfolioExperience({
 
         {/* Floating glass panels */}
         <motion.div
-          className="absolute bottom-12 left-8 bg-[#111111]/60 backdrop-blur-md border border-[#C6A86B]/10 rounded-xl px-4 py-3 text-xs font-mono pointer-events-none z-10"
+          className="absolute bottom-12 left-8 bg-[#111111]/60 backdrop-blur-md border border-[#C6A86B]/10 rounded-xl px-4 py-3 text-xs font-mono pointer-events-none z-10 hidden md:block"
           initial={{ opacity: 0, x: -30 }}
           animate={heroReady ? { opacity: 1, x: 0, y: [0, -8, 0] } : {}}
           transition={{
@@ -769,7 +787,7 @@ export default function PortfolioExperience({
         </motion.div>
 
         <motion.div
-          className="absolute bottom-12 right-8 bg-[#111111]/60 backdrop-blur-md border border-[#C6A86B]/10 rounded-xl px-4 py-3 text-xs font-mono pointer-events-none z-10"
+          className="absolute bottom-12 right-8 bg-[#111111]/60 backdrop-blur-md border border-[#C6A86B]/10 rounded-xl px-4 py-3 text-xs font-mono pointer-events-none z-10 hidden md:block"
           initial={{ opacity: 0, x: 30 }}
           animate={heroReady ? { opacity: 1, x: 0, y: [0, -8, 0] } : {}}
           transition={{
@@ -783,7 +801,7 @@ export default function PortfolioExperience({
         </motion.div>
 
         <motion.div
-          className="absolute top-24 left-8 bg-[#111111]/60 backdrop-blur-md border border-[#C6A86B]/10 rounded-xl px-4 py-3 text-xs font-mono pointer-events-none z-10"
+          className="absolute top-24 left-8 bg-[#111111]/60 backdrop-blur-md border border-[#C6A86B]/10 rounded-xl px-4 py-3 text-xs font-mono pointer-events-none z-10 hidden md:block"
           initial={{ opacity: 0, x: -30 }}
           animate={heroReady ? { opacity: 1, x: 0, y: [0, -8, 0] } : {}}
           transition={{
@@ -797,7 +815,7 @@ export default function PortfolioExperience({
         </motion.div>
 
         <motion.div
-          className="absolute top-24 right-8 bg-[#111111]/60 backdrop-blur-md border border-[#C6A86B]/10 rounded-xl px-4 py-3 text-xs font-mono pointer-events-none z-10"
+          className="absolute top-24 right-8 bg-[#111111]/60 backdrop-blur-md border border-[#C6A86B]/10 rounded-xl px-4 py-3 text-xs font-mono pointer-events-none z-10 hidden md:block"
           initial={{ opacity: 0, x: 30 }}
           animate={heroReady ? { opacity: 1, x: 0, y: [0, -8, 0] } : {}}
           transition={{
@@ -923,7 +941,7 @@ export default function PortfolioExperience({
 
           {/* Category tabs */}
           <div
-            className={`flex items-center gap-2 mb-10 border-b ${
+            className={`flex items-center gap-2 mb-10 border-b overflow-x-auto ${
               isDarkMode ? "border-[#222222]" : "border-gray-200"
             } pb-0`}
           >
@@ -1057,7 +1075,7 @@ export default function PortfolioExperience({
                 >
                   <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px]">
                     {/* LEFT: Project info */}
-                    <div className="relative p-10 flex flex-col justify-between min-h-[300px]">
+                    <div className="relative p-6 sm:p-10 flex flex-col justify-between min-h-[250px] sm:min-h-[300px]">
                       {/* Large background number */}
                       <span
                         className="absolute top-6 right-8 text-8xl font-bold select-none pointer-events-none"
