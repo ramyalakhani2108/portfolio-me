@@ -585,7 +585,7 @@ export default function ChatWidget({ profile, className, initialOpen, speakGreet
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             className={`absolute bottom-14 sm:bottom-16 md:bottom-20 right-0 bg-[#111111]/95 backdrop-blur-2xl border border-[#222222] rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ${
-              isMinimized ? "w-64 sm:w-72 md:w-80 h-16" : "w-[min(calc(100vw-1rem),calc(100vw-2rem))] sm:w-80 md:w-96 max-h-[calc(100vh-6rem)] sm:max-h-[calc(100vh-8rem)]"
+              isMinimized ? "w-64 sm:w-72 md:w-80 h-16" : "w-[calc(100vw-1rem)] sm:w-80 md:w-96 max-h-[calc(100vh-5rem)] sm:max-h-[calc(100vh-8rem)]"
             }`}
           >
             {/* Header */}

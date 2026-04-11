@@ -10,6 +10,14 @@ export function CustomCursor() {
     const ring = ringRef.current;
     if (!dot || !ring) return;
 
+    // Hide custom cursor on touch devices
+    const isTouchDevice = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
+    if (isTouchDevice) {
+      dot.style.display = "none";
+      ring.style.display = "none";
+      return;
+    }
+
     // Hide default cursor
     document.body.style.cursor = "none";
 

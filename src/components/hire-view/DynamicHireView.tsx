@@ -256,10 +256,17 @@ export default function DynamicHireView({
   // Load theme settings from localStorage or admin panel
   const loadThemeSettings = useCallback(async () => {
     try {
+      // Check if user manually toggled dark mode
+      const savedDarkMode = localStorage.getItem("hire-view-dark-mode");
+
       // Try to load from localStorage first (admin panel settings)
       const savedTheme = localStorage.getItem("admin-theme-settings");
       if (savedTheme) {
         const parsedTheme = JSON.parse(savedTheme);
+        // User's manual dark mode preference overrides admin theme
+        if (savedDarkMode !== null) {
+          parsedTheme.darkMode = JSON.parse(savedDarkMode);
+        }
         setThemeSettings(parsedTheme);
         setIsDarkMode(parsedTheme.darkMode);
         applyThemeToDocument(parsedTheme);
@@ -277,7 +284,7 @@ export default function DynamicHireView({
           primaryColor: themeData.primary_color || "#C6A86B",
           secondaryColor: themeData.secondary_color || "#9CA3AF",
           accentColor: themeData.accent_color || "#D4B87A",
-          darkMode: themeData.dark_mode || true,
+          darkMode: savedDarkMode !== null ? JSON.parse(savedDarkMode) : (themeData.dark_mode ?? true),
           animationIntensity: themeData.animation_intensity || 75,
           borderRadius: themeData.border_radius || 12,
           fontFamily: themeData.font_family || "Inter",
@@ -285,6 +292,13 @@ export default function DynamicHireView({
         setThemeSettings(theme);
         setIsDarkMode(theme.darkMode);
         applyThemeToDocument(theme);
+      } else if (savedDarkMode !== null) {
+        // No remote theme data but user has a local preference
+        const darkMode = JSON.parse(savedDarkMode);
+        setIsDarkMode(darkMode);
+        const newTheme = { ...themeSettings, darkMode };
+        setThemeSettings(newTheme);
+        applyThemeToDocument(newTheme);
       }
     } catch (error) {
       console.log("Theme settings not available, using defaults");
@@ -560,7 +574,7 @@ export default function DynamicHireView({
           ? `linear-gradient(135deg, ${themeSettings.primaryColor}20, ${themeSettings.secondaryColor}20)`
           : `linear-gradient(135deg, ${themeSettings.primaryColor}10, ${themeSettings.secondaryColor}10)`,
         borderRadius: `${themeSettings.borderRadius}px`,
-        padding: "2rem 1rem sm:3rem sm:2rem",
+        padding: "clamp(1.5rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem)",
       }}
     >
       <div
@@ -764,17 +778,17 @@ export default function DynamicHireView({
         >
           <CardHeader>
             <CardTitle
-              className={`text-2xl flex items-center gap-2 ${isDarkMode ? "text-[#F5F1E8]" : "text-gray-900"}`}
+              className={`text-xl sm:text-2xl flex items-center gap-2 ${isDarkMode ? "text-[#F5F1E8]" : "text-gray-900"}`}
               style={{ fontFamily: themeSettings.fontFamily }}
             >
               <Calendar
-                className="w-6 h-6"
+                className="w-5 h-5 sm:w-6 sm:h-6"
                 style={{ color: themeSettings.primaryColor }}
               />
               {section.title || "Professional Experience"}
             </CardTitle>
             {section.content?.description && (
-              <p className={isDarkMode ? "text-[#9CA3AF]" : "text-gray-600"}>
+              <p className={`text-sm sm:text-base ${isDarkMode ? "text-[#9CA3AF]" : "text-gray-600"}`}>
                 {section.content.description}
               </p>
             )}
@@ -787,7 +801,7 @@ export default function DynamicHireView({
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className={`relative pl-8 border-l-2 last:border-l-0`}
+                  className={`relative pl-6 sm:pl-8 border-l-2 last:border-l-0`}
                   style={{ borderColor: `${themeSettings.primaryColor}40` }}
                 >
                   <div
@@ -1040,7 +1054,7 @@ export default function DynamicHireView({
         className={`shadow-lg ${isDarkMode ? "bg-[#111111] border-[#222222]" : "bg-white border-blue-100"}`}
         style={{ borderRadius: `${themeSettings.borderRadius}px` }}
       >
-        <CardContent className="p-8">
+        <CardContent className="p-4 sm:p-6 md:p-8">
           <h3
             className={`text-xl font-semibold mb-6 ${isDarkMode ? "text-[#F5F1E8]" : "text-gray-900"}`}
             style={{ fontFamily: themeSettings.fontFamily }}
@@ -1170,12 +1184,12 @@ export default function DynamicHireView({
     return (
       <div className="min-h-screen bg-[#0B0B0C]">
         <header className="bg-[#111111]/80 backdrop-blur-sm border-b border-[#222222] sticky top-0 z-50">
-          <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="w-32 h-6 bg-gray-200 rounded animate-pulse" />
-            <div className="w-24 h-6 bg-gray-200 rounded animate-pulse" />
+          <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex items-center justify-between">
+            <div className="w-24 sm:w-32 h-6 bg-gray-200 rounded animate-pulse" />
+            <div className="w-20 sm:w-24 h-6 bg-gray-200 rounded animate-pulse" />
           </div>
         </header>
-        <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
           <HeroSkeleton />
           <SectionSkeleton />
           <SectionSkeleton />

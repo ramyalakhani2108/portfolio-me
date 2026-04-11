@@ -117,7 +117,7 @@ export function AvatarAssistant({ onAccept, onDecline }: AvatarAssistantProps) {
         {visible && (
           <motion.div
             key="avatar-assistant"
-            className="fixed bottom-[88px] right-4 z-50 flex items-end gap-2"
+            className="fixed bottom-[88px] right-2 sm:right-4 z-50 hidden md:flex items-end gap-2"
             initial={{ opacity: 0, y: 40, scale: 0.85 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.85 }}
