@@ -981,7 +981,7 @@ export default function DynamicHireView({
                             style={{
                               borderColor: `${themeSettings.primaryColor}40`,
                               "--tw-ring-color": themeSettings.primaryColor,
-                            }}
+                            } as React.CSSProperties}
                             placeholder={field.placeholder || ""}
                           />
                         ) : (
@@ -999,7 +999,7 @@ export default function DynamicHireView({
                             style={{
                               borderColor: `${themeSettings.primaryColor}40`,
                               "--tw-ring-color": themeSettings.primaryColor,
-                            }}
+                            } as React.CSSProperties}
                             placeholder={field.placeholder || ""}
                           />
                         )}
